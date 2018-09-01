@@ -1,6 +1,7 @@
 #ifndef LED_CONTROL_H
 #define LED_CONTROL_H
 #include "message_buffer.h"
+#include <stdint.h>
 
 struct led_control_msg {
   uint8_t desired_led_brightnesses[8];

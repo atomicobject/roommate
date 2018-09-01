@@ -31,11 +31,11 @@ void led_cycle_task_run( void * pvParameters ) {
   struct led_control_msg msg;
 
 
-  const TickType_t TWO_SECONDS = pdMS_TO_TICKS( 2000UL );
+  const TickType_t ONE_SECOND = pdMS_TO_TICKS( 1000 );
 
   for(;;) {
 
-    vTaskDelay(TWO_SECONDS);
+    vTaskDelay(ONE_SECOND);
 
     configPRINTF(("Sending LED Cycle message...\r\n") );
     xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_msg), portMAX_DELAY);
