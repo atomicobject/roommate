@@ -33,6 +33,7 @@ COMPONENT_SRCDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/demo_runner \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/greengrass_connectivity \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/tcp \
 
+COMPONENT_ADD_INCLUDEDIRS += include
 COMPONENT_ADD_INCLUDEDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/include
 endif
 
