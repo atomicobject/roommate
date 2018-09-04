@@ -20,9 +20,12 @@ EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_es
 EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/tcpip_adapter
 EXTRA_COMPONENT_DIRS += $(CURDIR)/../src
 
+setup-aws:
+	cd ../amazon-freertos/demos/common/tools/aws_config_quick_start && python SetupAWS.py setup
+
 # ======== ROOMMATE BOARD STUFF ========
 
-# out-of-repo directory do contain all the board configs.
+# out-of-repo directory to contain all the board configs.
 # can be overridden with env var:
 ROOMMATE_BOARDS_FROM_ROOT ?= ../roommate-boards
 ROOMMATE_BOARDS := $(CURDIR)/../$(ROOMMATE_BOARDS_FROM_ROOT)
@@ -31,10 +34,12 @@ ROOMMATE_BOARDS := $(CURDIR)/../$(ROOMMATE_BOARDS_FROM_ROOT)
 roommate_help:
 	@echo "Roommate build system. Example targets:"
 	@echo ""
-	@echo "make save-new-board BOARD=john-home - after calling SetupAWS.py, save its results as 'john-home'"
-	@echo "make print-BOARD - print current board name"
-	@echo "make use-board BOARD=foo - switch to board 'foo'"
-	@echo "make print-TARGET_BOARD - print current board config directory"
+	@echo "make setup-aws                       - run SetupAWS.py (fill out configure.json first!)"
+	@echo "make save-new-board BOARD=john-home  - after calling SetupAWS.py, save its results as 'john-home'"
+	@echo "make use-board BOARD=foo             - switch to board 'foo'"
+	@echo "make print-BOARD                     - print current board name"
+	@echo "make print-TARGET_BOARD              - print current board config directory"
+	@echo "make help                            - display Espressif help"
 
 CURRENT_BOARD_FILE = $(ROOMMATE_BOARDS)/current-board
 
@@ -59,7 +64,6 @@ THING_NAME = $(shell cat $(CONFIGURE_JSON_SRC)  |grep thing_name |sed 's/ *"thin
 # https://stackoverflow.com/a/25817631/202907
 print-%  : ; @echo $* = $($*)
 
-# THING_NAME = roommate-john-4
 CERT_ID_SRC = $(QUICK_START)/$(THING_NAME)_cert_id_file
 CERT_PEM_SRC = $(QUICK_START)/$(THING_NAME)_cert_pem_file
 KEY_PEM_SRC = $(QUICK_START)/$(THING_NAME)_private_key_pem_file
