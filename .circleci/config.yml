@@ -5,6 +5,9 @@ jobs:
       - image: debian:stretch
     steps:
       - checkout
+      - run:
+          name: test git
+          command: git --version
       - run: git submodule sync
       - run: git submodule update --init
       - run:
