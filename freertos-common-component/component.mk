@@ -33,6 +33,11 @@ COMPONENT_SRCDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/demo_runner \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/greengrass_connectivity \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/tcp \
 
+
+# ROOMMATE_BOARD include must go before demos/common/include in order to get our aws_clientcredential headers:
+ROOMMATE_BOARD_INCLUDE = ../$(TARGET_BOARD_FROM_ROOT)
+COMPONENT_ADD_INCLUDEDIRS += $(ROOMMATE_BOARD_INCLUDE)
+
 COMPONENT_ADD_INCLUDEDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/include
 endif
 
