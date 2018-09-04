@@ -7,6 +7,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "message_buffer.h"
+#include "task.h"
 
 // App includes
 #include "led_control.h"
@@ -16,6 +17,7 @@
 #define LED_CONTROL_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define LED_CONTROL_BUFFER_CAPACITY ((size_t)15)
  
+const TickType_t FIFTY_MICROSECONDS = pdMS_TO_TICKS(10) / 20;
 
 // Drive SPI at 4MHZ
 //https://productize.be/driving-ws2812-programmable-rgb-leds-using-hardware-spi/
@@ -47,6 +49,7 @@ MessageBufferHandle_t startLEDControlTask(void) {
     return msg_buffer_handle;
 }
 
+
 void prvStartLEDControlTask( void * pvParameters ) {
   MessageBufferHandle_t msg_buffer_handle = pvParameters;
   struct led_control_msg msg;
@@ -70,5 +73,7 @@ void prvStartLEDControlTask( void * pvParameters ) {
     }
 
     led_control_hw_test();
+    
+    vTaskDelay(FIFTY_MICROSECONDS); // Datasheet says this is required after each transaction
   }
 }
