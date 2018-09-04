@@ -24,7 +24,9 @@ EXTRA_COMPONENT_DIRS += $(CURDIR)/../src
 
 # out-of-repo directory do contain all the board configs.
 # can be overridden with env var:
-ROOMMATE_BOARDS ?= $(CURDIR)/../../roommate-boards
+ROOMMATE_BOARDS_FROM_ROOT ?= ../roommate-boards
+ROOMMATE_BOARDS := $(CURDIR)/../$(ROOMMATE_BOARDS_FROM_ROOT)
+
 
 roommate_help:
 	@echo "Roommate build system. Example targets:"
@@ -41,6 +43,7 @@ CURRENT_BOARD_FILE = $(ROOMMATE_BOARDS)/current-board
 # $(CURRENT_BOARD_FILE)
 BOARD = $(shell cat $(CURRENT_BOARD_FILE))
 
+export TARGET_BOARD_FROM_ROOT = $(ROOMMATE_BOARDS_FROM_ROOT)/$(BOARD)
 TARGET_BOARD = $(ROOMMATE_BOARDS)/$(BOARD)
 
 CLIENTCRED_H_SRC = $(AMAZON_FREERTOS_PATH)/demos/common/include/aws_clientcredential.h
@@ -78,14 +81,6 @@ save-new-board:
 
 use-board:
 	echo $(BOARD) > $(CURRENT_BOARD_FILE)
-
-# EXTRA_COMPONENT_DIRS += $(TARGET_BOARD)
-# COMPONENT_ADD_INCLUDEDIRS += $(TARGET_BOARD)
-
-# this puts an include path for $(TARGET_BOARD) at a higher precedence
-# than demos/common/include/, so that we get our headers instead of
-# the versioned ones:
-CFLAGS += -I $(TARGET_BOARD)
 
 # ======== END BOARD STUFF ========
 
