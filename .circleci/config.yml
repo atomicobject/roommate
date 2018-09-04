@@ -6,6 +6,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: install git I guess
+          command: sudo apt-get update; sudo apt-get install git
+      - run:
           name: test git
           command: git --version
       - run: git submodule sync
