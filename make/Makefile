@@ -20,6 +20,9 @@ EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_es
 EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/tcpip_adapter
 EXTRA_COMPONENT_DIRS += $(CURDIR)/../src
 
+config-aws:
+	@echo "Update: ../amazon-freertos/demos/common/tools/aws_config_quick_start/configure.json"
+
 setup-aws:
 	cd ../amazon-freertos/demos/common/tools/aws_config_quick_start && python SetupAWS.py setup
 
