@@ -1,0 +1,6 @@
+#ifndef ROOMMATE_PINOUT_H
+#define ROOMMATE_PINOUT_H
+
+#define LED_RMT_TX_GPIO 18
+
+#endif
