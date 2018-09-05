@@ -2,20 +2,16 @@ version: 2
 jobs:
   build:
     docker:
-      - image: debian:stretch
+      - image: jrrr/esp32-ci
+      # Espressif has a docker image! espressif/esp32-ci-env
+      # but it's out of date:
+      # WARNING: Toolchain version is not supported: 1.22.0-61-gab8375a
+      # Expected to see version: 1.22.0-80-g6c4433a
     steps:
       - checkout
-      - run:
-          name: install git I guess
-          command: sudo apt-get update; sudo apt-get install git
-      - run:
-          name: test git
-          command: git --version
       - run: git submodule sync
       - run: git submodule update --init
+      - run: xtensa-esp32-elf-gcc --version
       - run:
-          name: Greeting
-          command: echo Hello, world.
-      - run:
-          name: Print the Current Time
-          command: date
+          name: Build
+          command: cd make; make all
