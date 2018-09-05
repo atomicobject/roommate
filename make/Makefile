@@ -21,7 +21,12 @@ EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_es
 EXTRA_COMPONENT_DIRS += $(CURDIR)/../src
 
 config-aws:
-	@echo "Update: ../amazon-freertos/demos/common/tools/aws_config_quick_start/configure.json"
+	@echo "Enter your network credentials in: ../amazon-freertos/demos/common/tools/aws_config_quick_start/configure.json"
+	@echo "Valid network types are:"
+	@echo "eWiFiSecurityOpen"
+	@echo "eWiFiSecurityWEP"
+	@echo "eWiFiSecurityWPA"
+	@echo "eWiFiSecurityWPA2"
 
 setup-aws:
 	cd ../amazon-freertos/demos/common/tools/aws_config_quick_start && python SetupAWS.py setup
