@@ -32,8 +32,44 @@
 
 rmt_item32_t led_data_buffer[LED_BUFFER_ITEMS];
 
-void init_led_data_buffer(int a);
 void rmt_send_finished_isr(void *p_data);
+
+void setBits(uint32_t bits_to_send, uint32_t led){
+  uint32_t mask = 1 << (BITS_PER_LED_CMD - 1);
+  for (uint32_t bit = 0; bit < BITS_PER_LED_CMD; bit++) {
+    uint32_t bit_is_set = bits_to_send & mask;
+    led_data_buffer[led * BITS_PER_LED_CMD + bit] = bit_is_set ?  // + 1 to skip the first one for the reset
+                                                    (rmt_item32_t){{{T1H, 1, TL, 0}}} : 
+                                                    (rmt_item32_t){{{T0H, 1, TL, 0}}};
+    mask >>= 1;
+  }
+}
+
+void rotate_colors(int frame) 
+{
+
+  uint32_t colors[8] = {
+    0x771111,
+    0x117711,
+    0x111177,
+    0x777711,
+    0x771111,
+    0x117711,
+    0x111177,
+    0x777711,
+  };
+
+  for (uint32_t led = 0; led < NUM_LEDS; led++) {
+    uint32_t bits_to_send = colors[(frame + led) % 8];
+
+    setBits(bits_to_send, led);
+  }
+
+  // We could use something like this to add a LOW period at the start and end of the transmission rather than a task delay
+  // led_data_buffer[LED_BUFFER_ITEMS - 1] = (rmt_item32_t){{{1, 1, 45, 0}}};
+}
+
+void (*init_led_data_buffer)(int frame) = rotate_colors;
 
 void led_control_hw_init()
 {
@@ -65,39 +101,7 @@ void led_control_hw_init()
   init_led_data_buffer(0);
 }
 
-void init_led_data_buffer(int a) 
-{
-
-  uint32_t colors[8] = {
-    0x771111,
-    0x117711,
-    0x111177,
-    0x777711,
-    0x771111,
-    0x117711,
-    0x111177,
-    0x777711,
-  };
-
-
-  for (uint32_t led = 0; led < NUM_LEDS; led++) {
-    uint32_t bits_to_send = colors[(a + led) % 8];
-    uint32_t mask = 1 << (BITS_PER_LED_CMD - 1);
-    for (uint32_t bit = 0; bit < BITS_PER_LED_CMD; bit++) {
-      uint32_t bit_is_set = bits_to_send & mask;
-      led_data_buffer[led * BITS_PER_LED_CMD + bit] = bit_is_set ?  // + 1 to skip the first one for the reset
-                                                      (rmt_item32_t){{{T1H, 1, TL, 0}}} : 
-                                                      (rmt_item32_t){{{T0H, 1, TL, 0}}};
-      mask >>= 1;
-    }
-  }
-
-  // We could use something like this to add a LOW period at the start and end of the transmission rather than a task delay
-  // led_data_buffer[LED_BUFFER_ITEMS - 1] = (rmt_item32_t){{{1, 1, 45, 0}}};
-}
-
 int led_cycle = 0;
-
 
 void led_control_hw_test() {
   configPRINTF(("LED Control starting rmt_write_items...\r\n") );

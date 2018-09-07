@@ -31,7 +31,7 @@ void led_cycle_task_run( void * pvParameters ) {
   struct led_control_msg msg;
 
 
-  const TickType_t ONE_SECOND = pdMS_TO_TICKS( 1000 );
+  const TickType_t ONE_SECOND = pdMS_TO_TICKS( 400 );
 
   for(;;) {
     vTaskDelay(ONE_SECOND);
