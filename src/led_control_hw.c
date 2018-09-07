@@ -41,13 +41,16 @@ void setBits(uint32_t bits_to_send, uint32_t led){
     led_data_buffer[led * BITS_PER_LED_CMD + bit] = bit_is_set ?  // + 1 to skip the first one for the reset
                                                     (rmt_item32_t){{{T1H, 1, TL, 0}}} : 
                                                     (rmt_item32_t){{{T0H, 1, TL, 0}}};
+
     mask >>= 1;
   }
+
+  // We could use something like this to add a LOW period at the start and end of the transmission rather than a task delay
+  // led_data_buffer[LED_BUFFER_ITEMS - 1] = (rmt_item32_t){{{1, 1, 45, 0}}};
 }
 
 void rotate_colors(int frame) 
 {
-
   uint32_t colors[8] = {
     0x771111,
     0x117711,
@@ -64,12 +67,23 @@ void rotate_colors(int frame)
 
     setBits(bits_to_send, led);
   }
-
-  // We could use something like this to add a LOW period at the start and end of the transmission rather than a task delay
-  // led_data_buffer[LED_BUFFER_ITEMS - 1] = (rmt_item32_t){{{1, 1, 45, 0}}};
 }
 
-void (*init_led_data_buffer)(int frame) = rotate_colors;
+void zipzap(int frame) 
+{
+  int num_frames = (NUM_LEDS*2 - 2);
+  int animation_frame = frame % num_frames;
+  int pos = animation_frame < NUM_LEDS ? animation_frame : num_frames - animation_frame;
+
+  // configPRINTF(("frame %d pos %d\n",animation_frame, pos) );
+  for (uint32_t led = 0; led < NUM_LEDS; led++) {
+    uint32_t bits_to_send = led == pos ? 0xFFFFFF : 0;
+
+    setBits(bits_to_send, led);
+  }
+}
+
+void (*init_led_data_buffer)(int frame) = zipzap;
 
 void led_control_hw_init()
 {
