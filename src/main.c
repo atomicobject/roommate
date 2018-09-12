@@ -125,6 +125,60 @@ static void prvWifiConnect( void );
 static void prvMiscInitialization( void );
 /*-----------------------------------------------------------*/
 
+static xQueueHandle gpio_evt_queue = NULL;
+
+static void IRAM_ATTR gpio_isr_handler(void* arg)
+{
+    uint32_t gpio_num = (uint32_t) arg;
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+    // configPRINTF(("interrupt handler!!"));
+}
+
+static void gpio_task_example(void* arg)
+{
+    uint32_t io_num;
+    for(;;) {
+        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+            // printf("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+            configPRINTF(("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num)));
+        }
+    }
+}
+
+#define GPIO_INPUT_PIN 2
+#define GPIO_INPUT_BITMASK (1ULL<<GPIO_INPUT_PIN)
+// #define GPIO_INPUT_PIN (1ULL<<0)
+#define ESP_INTR_FLAG_DEFAULT 0
+
+void setupButton(){
+    gpio_config_t io_conf;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = GPIO_INPUT_BITMASK;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 0;
+    io_conf.intr_type = GPIO_PIN_INTR_ANYEDGE;
+    
+    #if 0
+    GPIO_INTR_DISABLE = 0,     /*!< Disable GPIO interrupt                             */
+    GPIO_INTR_POSEDGE = 1,     /*!< GPIO interrupt type : rising edge                  */
+    GPIO_INTR_NEGEDGE = 2,     /*!< GPIO interrupt type : falling edge                 */
+    GPIO_INTR_ANYEDGE = 3,     /*!< GPIO interrupt type : both rising and falling edge */
+    GPIO_INTR_LOW_LEVEL = 4,   /*!< GPIO interrupt type : input low level trigger      */
+    GPIO_INTR_HIGH_LEVEL = 5,  /*!< GPIO interrupt type : input high level trigger     */
+    #endif
+    gpio_config(&io_conf);
+
+    //create a queue to handle gpio event from isr
+    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+    // //start gpio task
+    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+
+    // //install gpio isr service
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    // //hook isr handler for specific gpio pin
+    gpio_isr_handler_add(GPIO_INPUT_PIN, gpio_isr_handler, (void*) GPIO_INPUT_PIN);
+
+}
 /**
  * @brief Application runtime entry point.
  */
@@ -137,6 +191,9 @@ int app_main( void )
     xLoggingTaskInitialize( mainLOGGING_TASK_STACK_SIZE,
               tskIDLE_PRIORITY + 5,
               mainLOGGING_MESSAGE_QUEUE_LENGTH );
+
+    setupButton();
+
     FreeRTOS_IPInit( ucIPAddress,
             ucNetMask,
             ucGatewayAddress,
@@ -175,10 +232,12 @@ void vApplicationDaemonTaskStartupHook( void )
         /* Connect to the wifi before running the demos */
         prvWifiConnect();
         /* Run all demos. */
-        DEMO_RUNNER_RunDemos();
+        // DEMO_RUNNER_RunDemos();
 
-        app_state.led_control_msg_buffer = startLEDControlTask();
-        led_cycle_task_start(&app_state);
+        // app_state.led_control_msg_buffer = startLEDControlTask();
+        // led_cycle_task_start(&app_state);
+
+        // todo: button task
     }
 }
 /*-----------------------------------------------------------*/
