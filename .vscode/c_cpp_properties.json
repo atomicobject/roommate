@@ -14,7 +14,7 @@
                 "${workspaceFolder}/amazon-freertos/tests/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/freertos/include"
             ],
             "defines": [],
-            "compilerPath": "/Users/jrr/esp/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
+            "compilerPath": "~/esp/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
