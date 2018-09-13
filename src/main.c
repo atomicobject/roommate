@@ -182,7 +182,7 @@ void vApplicationDaemonTaskStartupHook( void )
         app_state.led_control_msg_buffer = startLEDControlTask();
         led_cycle_task_start(&app_state);
 
-        setupButton();
+        beginHandlingButtonPresses();
     }
 }
 /*-----------------------------------------------------------*/

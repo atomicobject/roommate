@@ -1,4 +1,5 @@
 
+// GPIO usage based on the following example:
 // https://github.com/espressif/esp-idf/blob/master/examples/peripherals/gpio/main/gpio_example_main.c
 
 #include <stdio.h>
@@ -9,30 +10,48 @@
 #include "freertos/queue.h"
 #include "driver/gpio.h"
 
+#include "roommate_pinout.h"
+
 static xQueueHandle gpio_evt_queue = NULL;
+
+struct buttonEvent {
+    uint32_t gpio_num;
+};
 
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     uint32_t gpio_num = (uint32_t) arg;
-    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+    /*
+    I'd like to acquire the tick count (xTaskGetTickCount()) and GPIO state (gpio_get_level()) here,
+    but calling those from an ISR causes a crash :/
+
+    The messages seem to be handled soon enough that the values haven't changed.
+    */
+
+    struct buttonEvent event = {
+        .gpio_num = gpio_num,
+    };
+
+    xQueueSendFromISR(gpio_evt_queue, &event, NULL);
 }
 
 static void gpio_task_example(void* arg)
 {
-    uint32_t io_num;
+    struct buttonEvent buttonEvent;
     for(;;) {
-        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
-            printf("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
-            // configPRINTF(("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num)));
+        if(xQueueReceive(gpio_evt_queue, &buttonEvent, portMAX_DELAY)) {
+            int level = gpio_get_level(buttonEvent.gpio_num);
+            int tickCount = xTaskGetTickCount();
+
+            printf("%d: GPIO[%d] intr, val: %d\n", tickCount, buttonEvent.gpio_num, level );
         }
     }
 }
 
-#define GPIO_INPUT_PIN 2
-#define GPIO_INPUT_BITMASK (1ULL<<GPIO_INPUT_PIN)
+#define GPIO_INPUT_BITMASK (1ULL<<BUTTON_INPUT_GPIO)
 #define ESP_INTR_FLAG_DEFAULT 0
 
-void setupButton(){
+void beginHandlingButtonPresses(){
     gpio_config_t io_conf;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = GPIO_INPUT_BITMASK;
@@ -43,12 +62,12 @@ void setupButton(){
     gpio_config(&io_conf);
 
     //create a queue to handle gpio event from isr
-    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+    gpio_evt_queue = xQueueCreate(10, sizeof(struct buttonEvent));
     //start gpio task
     xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
 
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     //hook isr handler for specific gpio pin
-    gpio_isr_handler_add(GPIO_INPUT_PIN, gpio_isr_handler, (void*) GPIO_INPUT_PIN);
+    gpio_isr_handler_add(BUTTON_INPUT_GPIO, gpio_isr_handler, (void*) BUTTON_INPUT_GPIO);
 }

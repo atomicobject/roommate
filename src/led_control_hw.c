@@ -65,18 +65,27 @@ void led_control_hw_init()
   init_led_data_buffer(0);
 }
 
+#define RGBB(R, G, B, S) \
+  ( \
+    ((uint32_t)((uint32_t)R * S) << 16) | \
+    ((uint32_t)((uint32_t)B * S) <<  8) | \
+    ((uint32_t)((uint32_t)G * S) <<  0)   \
+  )
+
+#define BRIGHTNESS 0.1f
+
 void init_led_data_buffer(int a) 
 {
 
   uint32_t colors[8] = {
-    0x771111,
-    0x117711,
-    0x111177,
-    0x777711,
-    0x771111,
-    0x117711,
-    0x111177,
-    0x777711,
+    RGBB(0x77,0x11,0x11,BRIGHTNESS),
+    RGBB(0x11,0x77,0x11,BRIGHTNESS),
+    RGBB(0x11,0x11,0x77,BRIGHTNESS),
+    RGBB(0x77,0x77,0x11,BRIGHTNESS),
+    RGBB(0x77,0x11,0x11,BRIGHTNESS),
+    RGBB(0x11,0x77,0x11,BRIGHTNESS),
+    RGBB(0x11,0x11,0x77,BRIGHTNESS),
+    RGBB(0x77,0x77,0x11,BRIGHTNESS)
   };
 
 
