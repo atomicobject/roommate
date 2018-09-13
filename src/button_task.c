@@ -16,20 +16,23 @@ static xQueueHandle gpio_evt_queue = NULL;
 
 struct buttonEvent {
     uint32_t gpio_num;
+    TickType_t tick_count;
 };
 
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     uint32_t gpio_num = (uint32_t) arg;
-    /*
-    I'd like to acquire the tick count (xTaskGetTickCount()) and GPIO state (gpio_get_level()) here,
-    but calling those from an ISR causes a crash :/
 
-    The messages seem to be handled soon enough that the values haven't changed.
+    /*
+    I'd like to acquire the GPIO state (gpio_get_level()) here,
+    but calling that from an ISR causes a crash :/
+
+    The messages seem to be handled soon enough that the value hasn't changed.
     */
 
     struct buttonEvent event = {
         .gpio_num = gpio_num,
+        .tick_count = xTaskGetTickCountFromISR()
     };
 
     xQueueSendFromISR(gpio_evt_queue, &event, NULL);
@@ -41,9 +44,8 @@ static void gpio_task_example(void* arg)
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &buttonEvent, portMAX_DELAY)) {
             int level = gpio_get_level(buttonEvent.gpio_num);
-            int tickCount = xTaskGetTickCount();
 
-            printf("%d: GPIO[%d] intr, val: %d\n", tickCount, buttonEvent.gpio_num, level );
+            printf("%d: GPIO[%d] intr, val: %d\n", buttonEvent.tick_count, buttonEvent.gpio_num, level );
         }
     }
 }
