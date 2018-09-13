@@ -38,14 +38,14 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
     xQueueSendFromISR(gpio_evt_queue, &event, NULL);
 }
 
-static void gpio_task_example(void* arg)
+static void button_task(void* arg)
 {
     struct buttonEvent buttonEvent;
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &buttonEvent, portMAX_DELAY)) {
             int level = gpio_get_level(buttonEvent.gpio_num);
 
-            printf("%d: GPIO[%d] intr, val: %d\n", buttonEvent.tick_count, buttonEvent.gpio_num, level );
+            configPRINTF(("%d: GPIO[%d] intr, val: %d\n", buttonEvent.tick_count, buttonEvent.gpio_num, level ));
         }
     }
 }
@@ -66,7 +66,7 @@ void beginHandlingButtonPresses(){
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(struct buttonEvent));
     //start gpio task
-    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+    xTaskCreate(button_task, "ButtonTask", 2048, NULL, 10, NULL);
 
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
