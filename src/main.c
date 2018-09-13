@@ -34,6 +34,7 @@
 #include "led_control.h"
 #include "app_state.h"
 #include "led_cycle_task.h"
+#include "button_task.h"
 
 /* AWS System includes. */
 #include "aws_system_init.h"
@@ -137,6 +138,7 @@ int app_main( void )
     xLoggingTaskInitialize( mainLOGGING_TASK_STACK_SIZE,
               tskIDLE_PRIORITY + 5,
               mainLOGGING_MESSAGE_QUEUE_LENGTH );
+
     FreeRTOS_IPInit( ucIPAddress,
             ucNetMask,
             ucGatewayAddress,
@@ -179,6 +181,8 @@ void vApplicationDaemonTaskStartupHook( void )
 
         app_state.led_control_msg_buffer = startLEDControlTask();
         led_cycle_task_start(&app_state);
+
+        beginHandlingButtonPresses();
     }
 }
 /*-----------------------------------------------------------*/
