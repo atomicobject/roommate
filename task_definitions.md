@@ -2,9 +2,7 @@
 
 ### Calendar Sync Task
   - Creates an MQTT Client, and connects
-  - Subscribes to ROOMMATE_CAL_SYNC_RESPONSE topic events. Callback sends result to a queue
-  - Periodically sends an MQTT message requesting updated calendar event list
-  - Waits for response to arrive in queue
+  - Subscribes to applicable roommate calendar topics events. Callback sends result to a queue
   - Updates app state with most recent calendar event list
 
 ### UX Task
@@ -37,13 +35,18 @@
 	  uint8_t max_frames;
 	}
 	
-	typedef struct led_sequence (*led_sequence_executor_func)(void *sequence_state);
+	typedef struct led_frame (*led_sequence_executor_func)(void *sequence_state);
 	
 	typedef void *(*led_sequence_state_init_func)(void);  // Ideally, this should return a struct instead of void ptr...
 	
 	struct led_state {
 	  uint32_t leds[NUM_LEDS];
 	};
+
+  struct led_frame {
+    struct led_state new_state;
+    uint8_t duration_ms
+  };
 
 
 
