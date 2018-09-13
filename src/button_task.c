@@ -17,35 +17,46 @@ static xQueueHandle gpio_evt_queue = NULL;
 struct buttonEvent {
     uint32_t gpio_num;
     TickType_t tick_count;
+    int gpio_level;
 };
 
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     uint32_t gpio_num = (uint32_t) arg;
 
-    /*
-    I'd like to acquire the GPIO state (gpio_get_level()) here,
-    but calling that from an ISR causes a crash :/
-
-    The messages seem to be handled soon enough that the value hasn't changed.
-    */
-
     struct buttonEvent event = {
         .gpio_num = gpio_num,
-        .tick_count = xTaskGetTickCountFromISR()
+        .tick_count = xTaskGetTickCountFromISR(),
+        .gpio_level = gpio_get_level(gpio_num)
     };
 
     xQueueSendFromISR(gpio_evt_queue, &event, NULL);
 }
+
+static TickType_t last_tick = 0;
+
+#define TICKS_TO_MS(tick) ((tick)*1000uL / (uint32_t)configTICK_RATE_HZ)
 
 static void button_task(void* arg)
 {
     struct buttonEvent buttonEvent;
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &buttonEvent, portMAX_DELAY)) {
-            int level = gpio_get_level(buttonEvent.gpio_num);
-
-            configPRINTF(("%d: GPIO[%d] intr, val: %d\n", buttonEvent.tick_count, buttonEvent.gpio_num, level ));
+            switch(buttonEvent.gpio_level) {
+                case 0:
+                    {
+                        last_tick = buttonEvent.tick_count;
+                        configPRINTF(("Button DOWN\n"));
+                    }
+                    break;
+                case 1:
+                    {
+                        TickType_t duration = buttonEvent.tick_count - last_tick;
+                        int ms = TICKS_TO_MS(duration);
+                        configPRINTF(("Button UP after %d ms (%d ticks)\n", ms, duration));
+                    }
+                    break;
+            }
         }
     }
 }
