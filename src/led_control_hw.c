@@ -6,7 +6,6 @@
 
 #define LED_RMT_TX_CHANNEL RMT_CHANNEL_0
 
-#define NUM_LEDS 8
 #define BITS_PER_LED_CMD 24 
 #define LED_BUFFER_ITEMS ((NUM_LEDS * BITS_PER_LED_CMD)) // One extra for low period at  end of sequence
 
