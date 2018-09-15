@@ -5,7 +5,8 @@
 
 // Application Includes
 #include "led_cycle_task.h"
-#include "include/led_control_old.h"
+#include "include/led_control.h"
+#include "led_sequence.h"
 
 void led_cycle_task_run( void * pvParameters );
 
@@ -28,15 +29,20 @@ void led_cycle_task_start(struct app_state * p_app_state) {
 void led_cycle_task_run( void * pvParameters ) {
   configPRINTF(("Running LED Cycle Task!\r\n") );
   MessageBufferHandle_t msg_buffer_handle = pvParameters;
-  struct led_control_msg msg;
 
 
-  const TickType_t ONE_SECOND = pdMS_TO_TICKS( 1000 );
+  struct led_control_request msg = {
+    .type = LED_CONTROL_SEQUENCE_REQUEST,
+    .sequence_request_data = led_sequence_shakes_head(),
+  };
+
+
+  const TickType_t FIVE_SECONDS = pdMS_TO_TICKS( 5000 );
 
   for(;;) {
-    vTaskDelay(ONE_SECOND);
     configPRINTF(("Sending LED Cycle message...\r\n") );
-    xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_msg), portMAX_DELAY);
+    xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_request), portMAX_DELAY);
     configPRINTF(("LED Cycle message sent. \r\n") );
+    vTaskDelay(FIVE_SECONDS);
   }
 }

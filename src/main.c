@@ -177,9 +177,9 @@ void vApplicationDaemonTaskStartupHook( void )
         /* Connect to the wifi before running the demos */
         prvWifiConnect();
         /* Run all demos. */
-        DEMO_RUNNER_RunDemos();
+        // DEMO_RUNNER_RunDemos();
 
-        app_state.led_control_msg_buffer = startLEDControlTask();
+        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
         led_cycle_task_start(&app_state);
 
         beginHandlingButtonPresses();
