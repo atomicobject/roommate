@@ -28,21 +28,12 @@ MessageBufferHandle_t led_control_start_controlling_leds(void) {
     MessageBufferHandle_t msg_buffer_handle = xMessageBufferCreate( (sizeof(struct led_control_request) + sizeof(size_t)) * LED_CONTROL_BUFFER_CAPACITY );
     configASSERT( msg_buffer_handle != NULL );
 
-
     ( void ) xTaskCreate( control_leds,                /* The function that implements the demo task. */
                           "LEDControlTask",           /* The name to assign to the task being created. */
                           LED_CONTROL_STACK_SIZE,     /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
                           msg_buffer_handle,          /* The task parameter is not being used. */
                           LED_CONTROL_TASK_PRIORITY,  /* The priority at which the task being created will run. */
                           NULL );                     /* Not storing the task's handle. */
-
-
-    // struct led_state all_off_state = LED_STATE_ALL_OFF();
-    // struct led_control_request initial_msg = {
-    //     .type = LED_CONTROL_STEADY_STATE_REQUEST,
-    //     .steady_state_update_request_data = all_off_state,
-    // };
-    // xMessageBufferSend(msg_buffer_handle, &initial_msg, sizeof(initial_msg), portMAX_DELAY);
 
     return msg_buffer_handle;
 }

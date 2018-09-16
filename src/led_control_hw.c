@@ -69,5 +69,3 @@ void setup_rmt_data_buffer(struct led_state new_state)
   // We could use something like this to add a LOW period at the start and end of the transmission rather than a task delay
   // led_data_buffer[LED_BUFFER_ITEMS - 1] = (rmt_item32_t){{{1, 1, 45, 0}}};
 }
-
-
