@@ -3,5 +3,5 @@
 *.elf
 *.a
 make/build/
-.vscode
+.vscode/settings.json
 

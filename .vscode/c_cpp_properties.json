@@ -1,0 +1,73 @@
+{
+    "configurations": [
+        {
+            "name": "roommate",
+            "includePath": [
+                "${workspaceFolder}/src/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/app_trace/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/app_update/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/bootloader_support/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/console",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/cxx/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/driver/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/esp32/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/esp_adc_cal/include",
+                "${workspaceFolder}/amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/ethernet/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/expat/port/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/expat/include/expat",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/fatfs/src",
+                "${workspaceFolder}/amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/freertos/include",
+                "${workspaceFolder}/amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/config_files",
+                "${workspaceFolder}/amazon-freertos/lib/include",
+                "${workspaceFolder}/amazon-freertos/lib/include/private",
+                "${workspaceFolder}/amazon-freertos/lib/FreeRTOS/portable/ThirdParty/GCC/Xtensa_ESP32/include",
+                "${workspaceFolder}/amazon-freertos/lib/FreeRTOS-Plus-TCP/include",
+                "${workspaceFolder}/amazon-freertos/lib/FreeRTOS-Plus-TCP/source/portable/Compiler/GCC",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/jsmn",
+                "${workspaceFolder}/../roommate-boards/john-work",
+                "${workspaceFolder}/amazon-freertos/demos/common/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/heap/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/log/include",
+                "${workspaceFolder}/amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/mbedtls/port/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mbedtls/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/micro-ecc/micro-ecc",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/newlib/platform_include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/newlib/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/nghttp/port/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/nghttp/nghttp2/lib/includes",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/nvs_flash/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/openssl/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/pthread/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/sdmmc/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/soc/esp32/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/soc/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/spi_flash/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/spiffs/include",
+                "${workspaceFolder}/amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/tcpip_adapter/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/ulp/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/vfs/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/wear_levelling/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/wpa_supplicant/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/wpa_supplicant/port/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/esp32/include",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/xtensa-debug-module/include",
+                "${workspaceFolder}/make/build/include",
+                "${workspaceFolder}/make"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "defines": [
+                "ESP_PLATFORM",
+                "IDF_VER=v3.1-dev-322-gf307f41-dirty",
+                "MBEDTLS_CONFIG_FILE=mbedtls/esp_config.h",
+                "HAVE_CONFIG_H"
+            ],
+            "compilerPath": "~/esp/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
