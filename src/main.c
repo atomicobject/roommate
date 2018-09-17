@@ -183,7 +183,7 @@ void vApplicationDaemonTaskStartupHook( void )
 
         beginHandlingButtonPresses();
 
-        calendar_event_handler_begin();
+        // calendar_event_handler_begin();
 
         experiments_task_start(&app_state);
     }
