@@ -1,13 +1,24 @@
 #ifndef LED_CONTROL_H
 #define LED_CONTROL_H
-#include "message_buffer.h"
+#include "led_control_hw.h"
 #include <stdint.h>
+#include "message_buffer.h"
 
-struct led_control_msg {
-  uint8_t desired_led_brightnesses[8];
-  uint32_t desired_led_colors[8];
+
+enum led_control_request_type { 
+    LED_CONTROL_SEQUENCE_REQUEST, 
+    LED_CONTROL_STEADY_STATE_REQUEST,
 };
 
-MessageBufferHandle_t startLEDControlTask(void);
+
+struct led_control_request {
+    enum led_control_request_type type;
+    union {
+        struct led_sequence sequence_request_data;
+        struct led_state steady_state_update_request_data;
+    };
+};
+
+MessageBufferHandle_t led_control_start_controlling_leds(void);
 
 #endif
