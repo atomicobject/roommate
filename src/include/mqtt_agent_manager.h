@@ -1,0 +1,4 @@
+#ifndef CALENDAR_EVENT_HANDLER_H
+#define CALENDAR_EVENT_HANDLER_H
+
+#endif
