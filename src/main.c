@@ -35,6 +35,7 @@
 #include "app_state.h"
 #include "experiments_task.h"
 #include "button_task.h"
+#include "mqtt_agent_manager.h"
 
 /* AWS System includes. */
 #include "aws_system_init.h"
@@ -183,7 +184,7 @@ void vApplicationDaemonTaskStartupHook( void )
 
         beginHandlingButtonPresses();
 
-        // calendar_event_handler_begin();
+        mqtt_agent_manager_begin(&app_state);
 
         experiments_task_start(&app_state);
     }

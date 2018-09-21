@@ -2,6 +2,8 @@
 #include "task.h"
 #include "aws_mqtt_agent.h"
 #include "aws_clientcredential.h"
+#include "aws_wifi.h"
+#include <string.h>
 
 #include "app_state.h"
 #include "mqtt_agent_manager.h"
@@ -15,31 +17,44 @@
 #define CLIENT_ID                           ( ( const uint8_t * ) "CalendarEventHandler" )
 #define MQTT_AGENT_MANAGER_TLS_NEGOTIATION_TIMEOUT   pdMS_TO_TICKS( 12000 )
 
-void calendar_event_handler_begin(struct app_state * p_app_state) {
+void maintain_mqtt_agent_connection(void * task_param);
+BaseType_t mqtt_agent_event_callback_handler( void * p_user_data, const MQTTAgentCallbackParams_t * const p_callback_params );
+BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state );
+
+void mqtt_agent_manager_begin(struct app_state * p_app_state) {
+    configPRINTF(("Starting MQTT Agent Manager Task...\r\n"));
     ( void ) xTaskCreate( maintain_mqtt_agent_connection,      /* The function that implements the demo task. */
                           "MQTT_Agent_Manager",                /* The name to assign to the task being created. */
                           MQTT_AGENT_MANAGER_TASK_STACK_SIZE,  /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
-                          NULL,                                /* The task parameter is not being used. */
+                          p_app_state,                         /* The task parameter is not being used. */
                           MQTT_AGENT_MANAGER_TASK_PRIORITY,    /* The priority at which the task being created will run. */
                           NULL );                              /* Not storing the task's handle. */
     /* Create the MQTT client object and connect it to the MQTT broker. */
 }
 
-void maintain_mqtt_agent_connection(struct app_state * p_app_state) {
+void maintain_mqtt_agent_connection(void * task_param) {
+    struct app_state * p_app_state = task_param;
     p_app_state->mqtt_agent_connection_semaphore = xSemaphoreCreateBinary();
+    configPRINTF(("MQTT Agent Manager Task started\r\n"));
     for(;;) {
-        if (eMQTTAgentSuccess == createClientAndConnectToBroker(p_app_state)) {
+        if (WIFI_IsConnected() == pdFALSE) {
+            configPRINTF(("MQTT Agent Manager - No WiFi. Delaying for 5 seconds\r\n"));
+            vTaskDelay(pdMS_TO_TICKS(5000));
+
+        } else if (pdPASS == createClientAndConnectToBroker(p_app_state)) {
             // Just hang out here forever or until the agent connection is broken.
+            configPRINTF(("MQTT Agent Manager - Waiting for connection semaphore\r\n"));
             xSemaphoreTake(p_app_state->mqtt_agent_connection_semaphore, portMAX_DELAY);
+            configPRINTF(("MQTT Agent Manager - Was able to take connection semaphore\r\n"));
         } else {
-            configPRINTF("Delaying for 1 second before attempting MQTT connect again");
+            configPRINTF(("Delaying for 1 second before attempting MQTT connect again\r\n"));
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
 }
 
-static BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state ) {
-    MQTTAgentReturnCode_t xReturned;
+BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state ) {
+    MQTTAgentReturnCode_t last_mqtt_action_result = eMQTTAgentFailure;
     BaseType_t xReturn = pdFAIL;
     MQTTAgentConnectParams_t xConnectParameters =
     {
@@ -57,14 +72,19 @@ static BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state
     };
 
     /* Check this function has not already been executed. */
-    configASSERT( p_app_state->mqtt_agent_handle == NULL );
+    if ( p_app_state->mqtt_agent_handle == NULL ) {
+        configPRINTF( ( "MQTT Agent Manager creating agent...\r\n" ) );
+        last_mqtt_action_result = MQTT_AGENT_Create( &p_app_state->mqtt_agent_handle);
+    } else {
+        last_mqtt_action_result = eMQTTAgentSuccess;
+        configPRINTF( ( "MQTT Agent Manager - Agent is already created.\r\n" ) );
+    }
 
     /* The MQTT client object must be created before it can be used.  The
      * maximum number of MQTT client objects that can exist simultaneously
      * is set by mqttconfigMAX_BROKERS. */
-    xReturned = MQTT_AGENT_Create( &p_app_state->mqtt_agent_handle);
 
-    if( xReturned == eMQTTAgentSuccess )
+    if( last_mqtt_action_result == eMQTTAgentSuccess )
     {
         /* Fill in the MQTTAgentConnectParams_t member that is not const,
          * and therefore could not be set in the initializer (where
@@ -73,11 +93,11 @@ static BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state
 
         /* Connect to the broker. */
         configPRINTF( ( "MQTT Agent Manager - MQTT attempting to connect to %s.\r\n", clientcredentialMQTT_BROKER_ENDPOINT ) );
-        xReturned = MQTT_AGENT_Connect( p_app_state->mqtt_agent_handle,
-                                        &xConnectParameters,
-                                        MQTT_AGENT_MANAGER_TLS_NEGOTIATION_TIMEOUT);
+        last_mqtt_action_result = MQTT_AGENT_Connect( p_app_state->mqtt_agent_handle,
+                                                      &xConnectParameters,
+                                                      MQTT_AGENT_MANAGER_TLS_NEGOTIATION_TIMEOUT);
 
-        if( xReturned != eMQTTAgentSuccess )
+        if( last_mqtt_action_result != eMQTTAgentSuccess )
         {
             /* Could not connect, so delete the MQTT client. */
             ( void ) MQTT_AGENT_Delete( p_app_state->mqtt_agent_handle );
@@ -95,6 +115,7 @@ static BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state
 
 BaseType_t mqtt_agent_event_callback_handler( void * p_user_data, const MQTTAgentCallbackParams_t * const p_callback_params ) {
     if (p_callback_params->xMQTTEvent == eMQTTAgentDisconnect) {
+        configPRINTF( ( "MQTT Agent Manager - MQTT callback handler detected disconnect %s.\r\n", clientcredentialMQTT_BROKER_ENDPOINT ) );
         // The agent was disconnected, handle this event.
         // Send on a semaphore here so that MQTT connection monitor can reconnect
         struct app_state * p_app_state = p_user_data;
