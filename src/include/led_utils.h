@@ -11,7 +11,7 @@ struct led_state {
 
 struct led_frame {
     struct led_state new_state;
-    uint8_t duration_ms;
+    uint16_t duration_ms;
     bool is_last_frame;
 };
 

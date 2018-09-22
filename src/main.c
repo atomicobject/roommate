@@ -174,18 +174,19 @@ void vApplicationDaemonTaskStartupHook( void )
 {
     if( SYSTEM_Init() == pdPASS )
     {
+        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
+        experiments_task_start(&app_state);
+
         /* Connect to the wifi before running the demos */
         prvWifiConnect();
         /* Run all demos. */
         // DEMO_RUNNER_RunDemos();
 
-        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
 
         beginHandlingButtonPresses();
 
         // calendar_event_handler_begin();
 
-        experiments_task_start(&app_state);
     }
 }
 /*-----------------------------------------------------------*/
@@ -195,7 +196,7 @@ void prvWifiConnect( void )
     WIFINetworkParams_t xNetworkParams;
     WIFIReturnCode_t xWifiStatus;
 
-    xWifiStatus = WIFI_On();
+    xWifiStatus = WIFI_On(); // Does nothing if already on :)
 
     if( xWifiStatus == eWiFiSuccess )
     {
@@ -386,5 +387,8 @@ void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
         evt.event_info.got_ip.ip_info.netmask.addr = ulNetMask;
         evt.event_info.got_ip.ip_info.gw.addr = ulGatewayAddress;
         esp_event_send(&evt);
+    } else if (eNetworkEvent == eNetworkDown) {
+        
+        configPRINTF( ( "WIFI is DOWN behind enemy lines - go rescue it!\r\n" ) );
     }
 }

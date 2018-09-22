@@ -3,5 +3,6 @@
 #include "led_utils.h"
 
 struct led_sequence led_sequence_shakes_head(void);
+struct led_sequence led_sequence_newtons_cradle(void);
 
 #endif
