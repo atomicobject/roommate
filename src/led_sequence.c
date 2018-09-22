@@ -44,18 +44,15 @@ struct led_sequence led_sequence_shakes_head(void) {
 struct led_frame newtons_cradle(uint32_t frame_num, uint32_t elapsed_time_ms) {
     struct led_frame frame;
     memset(&frame.new_state.leds, 0, sizeof(struct led_state));
-    const uint8_t num_leds = NUM_LEDS - 1;
-    const uint8_t total_passes = 10;
-    const uint16_t frame_duration = 50;
-    bool moving_right = (frame_num / num_leds) % 2 == 0;
-    uint8_t lit_led = moving_right ? (frame_num % num_leds) : num_leds - (frame_num % num_leds) - 1;
-    if (moving_right && lit_led >= 3) lit_led += 1;
-    if (!moving_right && lit_led <= 4 && lit_led != 0) lit_led -= 1;
-    frame.new_state.leds[lit_led] = BLUE;
-    frame.new_state.leds[4] = BLUE;  
-    frame.new_state.leds[3] = BLUE;  
-    frame.duration_ms = lit_led == 7 ? frame_duration * 2 : frame_duration;
-    frame.is_last_frame = frame_num >= total_passes * num_leds;
+    const uint8_t total_passes = 5;
+    uint8_t seq[] = { 0x11, 0x12, 0x14, 0x18, 0x28, 0x48, 0x88, 0x88, 0x48, 0x28, 0x18, 0x14, 0x12, 0x11 };
+    const uint8_t num_states = 14;
+    uint8_t active_state = seq[frame_num % num_states];
+    for (uint8_t i = 0; i < NUM_LEDS; i++) {
+        frame.new_state.leds[i] = active_state & (0x01 << i) ? BLUE : LED_OFF;
+    }
+    frame.duration_ms = 50;
+    frame.is_last_frame = frame_num >= total_passes * num_states;
     return frame;
 }
 
