@@ -14,7 +14,7 @@
 #include "led_control_hw.h"
 #include "led_utils.h"
 
-#define LED_CONTROL_STACK_SIZE ( configMINIMAL_STACK_SIZE * 2 )
+#define LED_CONTROL_STACK_SIZE ( 2048 )
 #define LED_CONTROL_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define LED_CONTROL_BUFFER_CAPACITY ((size_t)2)
 const TickType_t FIFTY_MICROSECONDS = pdMS_TO_TICKS(10) / 20;

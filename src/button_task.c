@@ -77,7 +77,7 @@ void beginHandlingButtonPresses(){
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(struct buttonEvent));
     //start gpio task
-    xTaskCreate(button_task, "ButtonTask", 2048, NULL, 10, NULL);
+    xTaskCreate(button_task, "ButtonTask", 512, NULL, 10, NULL);
 
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);

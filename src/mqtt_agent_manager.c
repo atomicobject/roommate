@@ -1,5 +1,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
+#include "event_groups.h"
 #include "aws_mqtt_agent.h"
 #include "aws_clientcredential.h"
 #include "aws_wifi.h"
@@ -7,8 +8,9 @@
 
 #include "app_state.h"
 #include "mqtt_agent_manager.h"
+#include "mqtt_event_group_flags.h"
 
-#define MQTT_AGENT_MANAGER_TASK_STACK_SIZE ( configMINIMAL_STACK_SIZE * 2 )
+#define MQTT_AGENT_MANAGER_TASK_STACK_SIZE ( 2048 )
 #define MQTT_AGENT_MANAGER_TASK_PRIORITY   ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define MQTT_AGENT_MANAGER_CONNECT_FLAGS   ( mqttagentREQUIRE_TLS )
 
@@ -24,7 +26,7 @@ BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state );
 void mqtt_agent_manager_begin(struct app_state * p_app_state) {
     configPRINTF(("Starting MQTT Agent Manager Task...\r\n"));
     ( void ) xTaskCreate( maintain_mqtt_agent_connection,      /* The function that implements the demo task. */
-                          "MQTT_Agent_Manager",                /* The name to assign to the task being created. */
+                          "MQTTAgentManagerTask",              /* The name to assign to the task being created. */
                           MQTT_AGENT_MANAGER_TASK_STACK_SIZE,  /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
                           p_app_state,                         /* The task parameter is not being used. */
                           MQTT_AGENT_MANAGER_TASK_PRIORITY,    /* The priority at which the task being created will run. */
@@ -34,18 +36,20 @@ void mqtt_agent_manager_begin(struct app_state * p_app_state) {
 
 void maintain_mqtt_agent_connection(void * task_param) {
     struct app_state * p_app_state = task_param;
-    p_app_state->mqtt_agent_connection_semaphore = xSemaphoreCreateBinary();
-    configPRINTF(("MQTT Agent Manager Task started\r\n"));
+    p_app_state->mqtt_agent_event_group = xEventGroupCreate();
+    configPRINTF(("MQTT Agent Manager Task started. Created event group %d\r\n", p_app_state->mqtt_agent_event_group));
     for(;;) {
         if (WIFI_IsConnected() == pdFALSE) {
             configPRINTF(("MQTT Agent Manager - No WiFi. Delaying for 5 seconds\r\n"));
             vTaskDelay(pdMS_TO_TICKS(5000));
 
         } else if (pdPASS == createClientAndConnectToBroker(p_app_state)) {
+            xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_CONNECTED);
             // Just hang out here forever or until the agent connection is broken.
-            configPRINTF(("MQTT Agent Manager - Waiting for connection semaphore\r\n"));
-            xSemaphoreTake(p_app_state->mqtt_agent_connection_semaphore, portMAX_DELAY);
-            configPRINTF(("MQTT Agent Manager - Was able to take connection semaphore\r\n"));
+            configPRINTF(("MQTT Agent Manager - Waiting for agent disconnect\r\n"));
+            xEventGroupWaitBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_DISCONNECTED, pdTRUE, pdTRUE, portMAX_DELAY);
+            xEventGroupClearBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_CONNECTED);
+            configPRINTF(("MQTT Agent Manager - Detected agent disconnect\r\n"));
         } else {
             configPRINTF(("Delaying for 1 second before attempting MQTT connect again\r\n"));
             vTaskDelay(pdMS_TO_TICKS(1000));
@@ -120,7 +124,7 @@ BaseType_t mqtt_agent_event_callback_handler( void * p_user_data, const MQTTAgen
         // Send on a semaphore here so that MQTT connection monitor can reconnect
         struct app_state * p_app_state = p_user_data;
         // Don't think this callback actually runs in an interrupt context to this next call is ok.
-        xSemaphoreGive(p_app_state->mqtt_agent_connection_semaphore); // Signal that client was disconnected...
+        xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_DISCONNECTED);
     }
     return pdFALSE; // This means that we are not responsible for freeing the buffer memory. See aws_mqtt_agent.h:100
 }
