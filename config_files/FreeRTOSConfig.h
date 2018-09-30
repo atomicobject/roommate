@@ -57,7 +57,7 @@
  * memory.
  *
  * THESE PARAMETERS ARE DESCRIBED WITHIN THE 'CONFIGURATION' SECTION OF THE
- * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE. 
+ * FreeRTOS API DOCUMENTATION AVAILABLE ON THE FreeRTOS.org WEB SITE.
  *----------------------------------------------------------*/
 
 #define configUSE_PREEMPTION			1
@@ -65,6 +65,8 @@
 #define configUSE_TICK_HOOK				( CONFIG_FREERTOS_LEGACY_TICK_HOOK )
 #define configTICK_RATE_HZ				( CONFIG_FREERTOS_HZ )
 #define configUSE_DAEMON_TASK_STARTUP_HOOK 1
+#define CONFIG_FREERTOS_USE_TRACE_FACILITY 1
+#define CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS 2
 
 /* Use the default clock rate for simulator. */
 /* #define configCPU_CLOCK_HZ				80000000 */
@@ -91,6 +93,8 @@
 #define configQUEUE_REGISTRY_SIZE		CONFIG_FREERTOS_QUEUE_REGISTRY_SIZE
 #define configMAX_TASK_NAME_LEN			( CONFIG_FREERTOS_MAX_TASK_NAME_LEN )
 
+#define CONFIG_FREERTOS_CHECK_STACKOVERFLOW_CANARY 1
+
 #if CONFIG_FREERTOS_CHECK_STACKOVERFLOW_NONE
     #define configCHECK_FOR_STACK_OVERFLOW	0
 #elif CONFIG_FREERTOS_CHECK_STACKOVERFLOW_PTRVAL
@@ -99,8 +103,8 @@
     #define configCHECK_FOR_STACK_OVERFLOW	2
 #endif
 
-/* We define the heap to span all of the non-statically-allocated shared RAM. 
- * TODO: Make sure there is some space left for the app and main cpu when running outside 
+/* We define the heap to span all of the non-statically-allocated shared RAM.
+ * TODO: Make sure there is some space left for the app and main cpu when running outside
  * of a thread. */
 #define configAPPLICATION_ALLOCATED_HEAP 1
 #define configTOTAL_HEAP_SIZE			(&_heap_end - &_heap_start)//( ( size_t ) (64 * 1024) )
@@ -148,7 +152,7 @@
 
 /* Sets the length of the buffers into which logging messages are written - so
  * also defines the maximum length of each log message. */
-#define configLOGGING_MAX_MESSAGE_LENGTH            128
+#define configLOGGING_MAX_MESSAGE_LENGTH            192
 
 /* Set to 1 to prepend each log message with a message number, the task name,
  * and a time stamp. */
@@ -287,6 +291,8 @@
 
 #define configPROFILING                      ( 0 )
 
+/* The platform FreeRTOS is running on. */
+#define configPLATFORM_NAME    "EspressifESP32"
 
 #ifndef __ASSEMBLER__
 /*-----------------------------------------------------------
@@ -341,7 +347,7 @@
 /* ESP31 and ESP32 are dualcore processors. */
 #ifndef CONFIG_FREERTOS_UNICORE
     #define portNUM_PROCESSORS 2
-#else 
+#else
     #define portNUM_PROCESSORS 1
 #endif
 
@@ -383,4 +389,3 @@
 #endif
 
 #endif /* #define FREERTOS_CONFIG_H */
-
