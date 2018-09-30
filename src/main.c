@@ -35,6 +35,8 @@
 #include "app_state.h"
 #include "experiments_task.h"
 #include "button_task.h"
+#include "mqtt_agent_manager.h"
+#include "aws_event_coordinator.h"
 
 /* AWS System includes. */
 #include "aws_system_init.h"
@@ -175,7 +177,6 @@ void vApplicationDaemonTaskStartupHook( void )
     if( SYSTEM_Init() == pdPASS )
     {
         app_state.led_control_msg_buffer = led_control_start_controlling_leds();
-        experiments_task_start(&app_state);
 
         /* Connect to the wifi before running the demos */
         prvWifiConnect();
@@ -185,8 +186,11 @@ void vApplicationDaemonTaskStartupHook( void )
 
         beginHandlingButtonPresses();
 
-        // calendar_event_handler_begin();
+        mqtt_agent_manager_begin(&app_state);
+        app_state.aws_event_coordinator_buffer = aws_event_coordinator_start_coordinating(&app_state);
 
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        experiments_task_start(&app_state);
     }
 }
 /*-----------------------------------------------------------*/
@@ -359,12 +363,12 @@ void vApplicationStackOverflowHook( TaskHandle_t xTask,
                                     char * pcTaskName )
 {
     configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
-    portDISABLE_INTERRUPTS();
+    // portDISABLE_INTERRUPTS();
 
-    /* Loop forever */
-    for( ; ; )
-    {
-    }
+    // /* Loop forever */
+    // for( ; ; )
+    // {
+    // }
 }
 /*-----------------------------------------------------------*/
 void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )

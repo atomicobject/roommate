@@ -13,9 +13,9 @@ ifndef IDF_PATH
 export IDF_PATH := $(AMAZON_FREERTOS_PATH)/lib/third_party/mcu_vendor/espressif/esp-idf
 endif
 
-EXTRA_COMPONENT_DIRS := $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/ethernet
-EXTRA_COMPONENT_DIRS += $(CURDIR)/../freertos-common-component
-EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/freertos
+EXTRA_COMPONENT_DIRS := $(CURDIR)/../freertos-common-component
+EXTRA_COMPONENT_DIRS += $(CURDIR)/../freertos
+EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/ethernet
 EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/mbedtls
 EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/tcpip_adapter
 EXTRA_COMPONENT_DIRS += $(CURDIR)/../src
