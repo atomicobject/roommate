@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <string.h>
 
-// Move red led back and forth twice (four swipes total)
 struct led_frame shakes_head(uint32_t frame_num, uint32_t elapsed_time_ms) {
     const uint32_t ms_per_swipe = 200;
     const uint32_t frame_duration_ms = ms_per_swipe / NUM_LEDS;
@@ -38,6 +37,28 @@ struct led_frame shakes_head(uint32_t frame_num, uint32_t elapsed_time_ms) {
 struct led_sequence led_sequence_shakes_head(void) {
     return (struct led_sequence) {
         .executor = &shakes_head,
-        .max_frames = 100,
+        .max_frames = 100, // Higher than needed (incase we adjust the sequence)
+    };
+}
+
+struct led_frame newtons_cradle(uint32_t frame_num, uint32_t elapsed_time_ms) {
+    struct led_frame frame;
+    memset(&frame.new_state.leds, 0, sizeof(struct led_state));
+    const uint8_t total_passes = 5;
+    uint8_t seq[] = { 0x11, 0x12, 0x14, 0x18, 0x28, 0x48, 0x88, 0x88, 0x48, 0x28, 0x18, 0x14, 0x12, 0x11 };
+    const uint8_t num_states = 14;
+    uint8_t active_state = seq[frame_num % num_states];
+    for (uint8_t i = 0; i < NUM_LEDS; i++) {
+        frame.new_state.leds[i] = active_state & (0x01 << i) ? BLUE : LED_OFF;
+    }
+    frame.duration_ms = 50;
+    frame.is_last_frame = frame_num >= total_passes * num_states;
+    return frame;
+}
+
+struct led_sequence led_sequence_newtons_cradle(void) {
+    return (struct led_sequence) {
+        .executor = &newtons_cradle,
+        .max_frames = 200, // Higher than needed (incase we adjust the sequence)
     };
 }
