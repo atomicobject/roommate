@@ -37,6 +37,7 @@
 #include "button_task.h"
 #include "mqtt_agent_manager.h"
 #include "aws_event_coordinator.h"
+#include "roommate.h"
 
 /* AWS System includes. */
 #include "aws_system_init.h"
@@ -176,6 +177,7 @@ void vApplicationDaemonTaskStartupHook( void )
 {
     if( SYSTEM_Init() == pdPASS )
     {
+        app_state.roommate_queue = roommate_begin(&app_state);
         app_state.led_control_msg_buffer = led_control_start_controlling_leds();
 
         /* Connect to the wifi before running the demos */

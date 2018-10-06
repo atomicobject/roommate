@@ -1,8 +1,11 @@
 #include "FreeRTOS.h"
 #include "task.h"
+#include "message_buffer.h"
+
 #include <stdio.h>
 #include <string.h>
-#include "message_buffer.h"
+#include <sys/time.h>                   /* gettimeofday() */
+#include "time.h"
 
 // Application Includes
 #include "app_state.h"
@@ -11,7 +14,7 @@
 #include "calendar_event.h"
 #include "jsmn.h"
 
-#define AWS_EVENT_COORDINATOR_STACK_SIZE ( 2048 )
+#define AWS_EVENT_COORDINATOR_STACK_SIZE ( 2304 )
 #define AWS_EVENT_COORDINATOR_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define AWS_EVENT_COORDINATOR_CAPACITY ((size_t)3) // TODO: Think about how many we actually need here...
 
@@ -28,7 +31,7 @@ MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state 
     ( void ) xTaskCreate( coordinate_events,                    /* The function that implements the demo task. */
                           "AWS Event Coord",                    /* The name to assign to the task being created. */
                           AWS_EVENT_COORDINATOR_STACK_SIZE,     /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
-                          p_app_state,                    /* The task parameter is not being used. */
+                          p_app_state,                          /* The task parameter is not being used. */
                           AWS_EVENT_COORDINATOR_TASK_PRIORITY,  /* The priority at which the task being created will run. */
                           NULL );                               /* Not storing the task's handle. */
 
@@ -84,7 +87,40 @@ void coordinate_events(void * p_params) {
                 configPRINTF(("Event Coordinator got an event. Get it out of the buffer...\r\n"));
                 struct aws_event rx_event;
                 size_t received_bytes = xMessageBufferReceive(p_app_state->aws_event_coordinator_buffer, &rx_event, sizeof(struct aws_event), 100);
-                configPRINTF(("Event Coordinator got an event of length %d out of the buffer!\r\n"));
+
+                switch (rx_event.type) {
+                    case AWS_EVENT_CALENDAR_DATA_RECEIVED:
+                    {
+                        struct calendar_events_data msg_data = {
+                            .num_events = rx_event.calendar_data.num_events
+                        };
+
+                        struct tm t;
+                        for (int i = 0; i < rx_event.calendar_data.num_events; i++) {
+                            strptime(rx_event.calendar_data.events[i].start_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
+                            msg_data.events[i].start = mktime(&t);
+
+                            strptime(rx_event.calendar_data.events[i].end_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
+                            msg_data.events[i].end = mktime(&t);
+                            configPRINTF(("Event times: %d - %d",msg_data.events[i].start, msg_data.events[i].end ));
+                        }
+                        struct roommate_event calendar_event = {
+                             .type = ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS,
+                             .calendar_events_data = msg_data,
+                        };
+                        xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
+
+                        calendar_event.type = ROOMMATE_EVENT_SET_CLOCK;
+                        strptime(rx_event.calendar_data.current_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
+                        calendar_event.set_clock_data.time = mktime(&t);
+                        xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
+                    }
+                    break;
+                    case AWS_EVENT_REQUEST_CALENDAR_DATA:
+                    break;
+                    case AWS_EVENT_REQUEST_ROOM_HOLD:
+                    break;
+                }
             }
             
             // configPRINTF(("Got either MQTT agent disconnected or an event came in for topic: %s\r\n", p_publish_parameters->pucTopic));
@@ -192,7 +228,12 @@ static MQTTBool_t handle_received_event_for_subscription( void * p_context,
     struct calendar_data extracted_calendar_data = extract_calendar_data(p_publish_parameters->pvData, p_publish_parameters->ulDataLength);
     configPRINTF(("Extracted %d calendar events!\r\n", extracted_calendar_data.num_events));
 
-    xMessageBufferSend(p_app_state->aws_event_coordinator_buffer, &extracted_calendar_data, sizeof(struct aws_event), portMAX_DELAY);
+    struct aws_event event = {
+        .type = AWS_EVENT_CALENDAR_DATA_RECEIVED,
+        .calendar_data = extracted_calendar_data,
+    };
+
+    xMessageBufferSend(p_app_state->aws_event_coordinator_buffer, &event, sizeof(struct aws_event), portMAX_DELAY);
     xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_RX_DATA_READY);
 
     /* The data was copied into the FreeRTOS message buffer, so the buffer

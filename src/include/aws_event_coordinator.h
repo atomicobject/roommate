@@ -1,6 +1,7 @@
 #ifndef AWS_EVENT_COORDINATOR_H
 #define AWS_EVENT_COORDINATOR_H
 #include "calendar_event.h"
+#include "roommate.h"
 
 // FreeRTOS Includes
 #include "message_buffer.h"
@@ -12,7 +13,6 @@ enum aws_event_type {
     AWS_EVENT_REQUEST_ROOM_HOLD,
 };
 
-#define MAX_CALENDAR_EVENTS_PER_MESSAGE 10
 
 struct calendar_data {
     timestamp_t current_time; 
