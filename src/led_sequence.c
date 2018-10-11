@@ -5,6 +5,7 @@
 #include <string.h>
 
 struct led_frame shakes_head(uint32_t frame_num, uint32_t elapsed_time_ms) {
+    (void)elapsed_time_ms;
     const uint32_t ms_per_swipe = 200;
     const uint32_t frame_duration_ms = ms_per_swipe / NUM_LEDS;
 
@@ -42,6 +43,7 @@ struct led_sequence led_sequence_shakes_head(void) {
 }
 
 struct led_frame newtons_cradle(uint32_t frame_num, uint32_t elapsed_time_ms) {
+    (void)elapsed_time_ms;
     struct led_frame frame;
     memset(&frame.new_state.leds, 0, sizeof(struct led_state));
     const uint8_t total_passes = 5;
