@@ -1,12 +1,10 @@
 #### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
 # This file is a copy of amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/amazon-freertos-common/component.mk
-# That file adds "../../" as a COMPONENT_SRCDIRS which causes main.c in that directory to be built. We only want our own main file to be build.
 
 # We do a few things here to try to simplify the process of integrating changes fro upstream:
 # - Our changes are purely additive.
 #   - If you need to edit an existing line from upstream, "comment" it out, and put your version above or below it.
-# - The upstream version of the file is kept in the (todo) branch for easy git diffs.
-
+# - To make diffing various versions easier, we keep the upstream version of this file in a separate branch: "upstream-version-of-copied-files".
 
 ifeq ("commented","out")
 #### ==== ^^^^ END CUSTOMIZATION ^^^^ ====
@@ -68,6 +66,7 @@ COMPONENT_SRCDIRS += ../.. \
 #### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
 endif
 
+# Upstream component.mk adds "../../" as a COMPONENT_SRCDIRS which causes main.c in that directory to be built. We only want our own main file to be built.
 COMPONENT_SRCDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/demo_runner \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/shadow \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/mqtt \
