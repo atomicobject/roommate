@@ -52,7 +52,9 @@
                 "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/esp32/include",
                 "${workspaceFolder}/amazon-freertos/lib/third_party/mcu_vendor/espressif/esp-idf/components/xtensa-debug-module/include",
                 "${workspaceFolder}/make/build/include",
-                "${workspaceFolder}/make"
+                "${workspaceFolder}/make",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/unity/src",
+                "${workspaceFolder}/amazon-freertos/lib/third_party/unity/extras/fixture/src"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": true
