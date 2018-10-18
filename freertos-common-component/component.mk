@@ -25,8 +25,10 @@ COMPONENT_SRCDIRS := $(AMAZON_FREERTOS_LIB_DIR)/mqtt \
         $(AMAZON_FREERTOS_LIB_DIR)/utils \
         $(AMAZON_FREERTOS_LIB_DIR)/bufferpool \
         $(AMAZON_FREERTOS_LIB_DIR)/tls \
+        $(AMAZON_FREERTOS_LIB_DIR)/ota \
         $(AMAZON_FREERTOS_LIB_DIR)/crypto \
         $(AMAZON_FREERTOS_LIB_DIR)/wifi/portable/espressif/esp32_devkitc_esp_wrover_kit \
+        $(AMAZON_FREERTOS_LIB_DIR)/ota/portable/espressif/esp32_devkitc_esp_wrover_kit \
         $(AMAZON_FREERTOS_LIB_DIR)/secure_sockets/portable/freertos_plus_tcp \
         $(AMAZON_FREERTOS_LIB_DIR)/pkcs11/portable/espressif/esp32_devkitc_esp_wrover_kit \
         $(AMAZON_FREERTOS_LIB_DIR)/pkcs11/mbedtls \
@@ -35,9 +37,10 @@ COMPONENT_SRCDIRS := $(AMAZON_FREERTOS_LIB_DIR)/mqtt \
         $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/source \
         $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/source/portable/BufferManagement \
         $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/source/portable/NetworkInterface/esp32 \
-        $(AMAZON_FREERTOS_LIB_DIR)/third_party/jsmn
+        $(AMAZON_FREERTOS_LIB_DIR)/third_party/jsmn \
+        $(AMAZON_FREERTOS_LIB_DIR)/third_party/tinycbor
 
-COMPONENT_ADD_INCLUDEDIRS := $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/include $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/source/portable/Compiler/GCC $(AMAZON_FREERTOS_LIB_DIR)/third_party/jsmn
+COMPONENT_ADD_INCLUDEDIRS := $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/include $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/source/portable/Compiler/GCC $(AMAZON_FREERTOS_LIB_DIR)/third_party/jsmn $(AMAZON_FREERTOS_LIB_DIR)/third_party/tinycbor
 
 COMPONENT_OBJEXCLUDE := $(AMAZON_FREERTOS_LIB_DIR)/FreeRTOS-Plus-TCP/source/portable/BufferManagement/BufferAllocation_1.o
 
@@ -51,6 +54,7 @@ COMPONENT_SRCDIRS += ../.. \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/mqtt \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/greengrass_connectivity \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/tcp \
+    $(AMAZON_FREERTOS_DEMOS_DIR)/common/ota \
 
 #### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
 endif
@@ -70,7 +74,7 @@ COMPONENT_ADD_INCLUDEDIRS += $(ROOMMATE_BOARD_INCLUDE)
 COMPONENT_ADD_INCLUDEDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/include
 endif
 
-COMPONENT_PRIV_INCLUDEDIRS := $(AMAZON_FREERTOS_LIB_DIR)/third_party/pkcs11
+COMPONENT_PRIV_INCLUDEDIRS := $(AMAZON_FREERTOS_LIB_DIR)/third_party/pkcs11 $(AMAZON_FREERTOS_LIB_DIR)/ota/portable/espressif/esp32_devkitc_esp_wrover_kit
 
 #### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
 ifeq ("commented","out")
