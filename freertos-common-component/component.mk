@@ -1,7 +1,7 @@
 #### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
 # This file is a copy of amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/amazon-freertos-common/component.mk
 
-# We do a few things here to try to simplify the process of integrating changes fro upstream:
+# We do a few things here to try to simplify the process of integrating changes from upstream:
 # - Our changes are purely additive.
 #   - If you need to edit an existing line from upstream, "comment" it out, and put your version above or below it.
 # - To make diffing various versions easier, we keep the upstream version of this file in a separate branch: "upstream-version-of-copied-files".
