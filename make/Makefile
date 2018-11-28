@@ -13,6 +13,9 @@ ifndef IDF_PATH
 export IDF_PATH := $(AMAZON_FREERTOS_PATH)/lib/third_party/mcu_vendor/espressif/esp-idf
 endif
 
+QUICK_START_FROM_FREERTOS = tools/aws_config_quick_start
+QUICK_START = $(AMAZON_FREERTOS_PATH)/$(QUICK_START_FROM_FREERTOS)
+
 EXTRA_COMPONENT_DIRS := $(CURDIR)/../freertos-common-component
 EXTRA_COMPONENT_DIRS += $(CURDIR)/../freertos
 EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/ethernet
@@ -21,7 +24,7 @@ EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_es
 EXTRA_COMPONENT_DIRS += $(CURDIR)/../src
 
 config-aws:
-	@echo "Enter your network credentials in: ../amazon-freertos/demos/common/tools/aws_config_quick_start/configure.json"
+	@echo "Enter your network credentials in: ../amazon-freertos/$(QUICK_START_FROM_FREERTOS)/configure.json"
 	@echo "Valid network types are:"
 	@echo "eWiFiSecurityOpen"
 	@echo "eWiFiSecurityWEP"
@@ -29,7 +32,7 @@ config-aws:
 	@echo "eWiFiSecurityWPA2"
 
 setup-aws:
-	cd ../amazon-freertos/demos/common/tools/aws_config_quick_start && python SetupAWS.py setup
+	cd $(QUICK_START) && python SetupAWS.py setup
 
 # ======== ROOMMATE BOARD STUFF ========
 
@@ -62,7 +65,6 @@ TARGET_BOARD = $(ROOMMATE_BOARDS)/$(BOARD)
 CLIENTCRED_H_SRC = $(AMAZON_FREERTOS_PATH)/demos/common/include/aws_clientcredential.h
 CLIENTCRED_KEYS_H_SRC = $(AMAZON_FREERTOS_PATH)/demos/common/include/aws_clientcredential_keys.h 
 
-QUICK_START = $(AMAZON_FREERTOS_PATH)/demos/common/tools/aws_config_quick_start
 CONFIGURE_JSON_SRC = $(QUICK_START)/configure.json
 
 # pull THING_NAME out of configure.json:
