@@ -23,6 +23,8 @@ We're using [Amazon FreeRTOS](https://github.com/aws/amazon-freertos) as a (pris
 You can repeat the above process for as many boards/environments as you choose
 Use `make use-board BOARD=a-great-board-name` to begin using a specific board profile
 
+Usage information is available via `make roommate-help`.
+
 ## Build and Run
 
 To build and flash
