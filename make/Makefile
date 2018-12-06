@@ -42,7 +42,7 @@ ROOMMATE_BOARDS_FROM_ROOT ?= ../roommate-boards
 ROOMMATE_BOARDS := $(CURDIR)/../$(ROOMMATE_BOARDS_FROM_ROOT)
 
 
-roommate_help:
+roommate-help:
 	@echo "Roommate build system. Example targets:"
 	@echo ""
 	@echo "make setup-aws                       - run SetupAWS.py (fill out configure.json first!)"
@@ -68,7 +68,7 @@ CLIENTCRED_KEYS_H_SRC = $(AMAZON_FREERTOS_PATH)/demos/common/include/aws_clientc
 CONFIGURE_JSON_SRC = $(QUICK_START)/configure.json
 
 # pull THING_NAME out of configure.json:
-THING_NAME = $(shell cat $(CONFIGURE_JSON_SRC)  |grep thing_name |sed 's/ *"thing_name":"\(.*\)",/\1/')
+THING_NAME = $(shell cat $(CONFIGURE_JSON_SRC)  |grep thing_name |sed 's/ *"thing_name": *"\(.*\)",/\1/')
 
 # this allows you to print a variable with e.g. make print-FOO
 # https://stackoverflow.com/a/25817631/202907
