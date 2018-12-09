@@ -1,12 +1,13 @@
 # Roommate - Embedded
 
-AO Conference Room IoT Project
+_Roommate_ is a project to create a conference room gadget that displays availability, takes impromptu reservations, etc.
 
-| Embedded Device | Cloud Backend |
-| --------------- | ------------- |
-| [atomicobject/roommate](https://github.com/atomicobject/roommate) | [atomicobject/roommate-lambda](https://github.com/atomicobject/roommate-lambda) |
+This repo contains code for the embedded device, an [Espressif ESP32](https://aws.amazon.com/blogs/apn/connect-microcontroller-based-devices-to-the-cloud-with-amazon-freertos-and-espressif-esp32/) running [Amazon FreeRTOS](https://github.com/aws/amazon-freertos).
+
+| Embedded Device                                                                                                           | Cloud Backend                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [atomicobject/roommate](https://github.com/atomicobject/roommate)                                                         | [atomicobject/roommate-lambda](https://github.com/atomicobject/roommate-lambda)                                                         |
 | [![CircleCI](https://circleci.com/gh/atomicobject/roommate.svg?style=svg)](https://circleci.com/gh/atomicobject/roommate) | [![CircleCI](https://circleci.com/gh/atomicobject/roommate-lambda.svg?style=svg)](https://circleci.com/gh/atomicobject/roommate-lambda) |
-
 
 ## Clone (with submodules)
 
@@ -16,7 +17,7 @@ AO Conference Room IoT Project
 
 We're using [Amazon FreeRTOS](https://github.com/aws/amazon-freertos) as a (pristine) submodule, which makes this a little tricky.
 
-1. edit _amazon-freertos/tools/aws_config_quick_start/configure.json_ (documented in amazon-freertos/tools/aws_config_quick_start/README.md)
+1. Edit _amazon-freertos/tools/aws_config_quick_start/configure.json_ (documented in the adjacent [README.md](amazon-freertos/tools/aws_config_quick_start/README.md))
 
 2. From the _make_ directory, `make setup-aws` to perform freertos' initial setup (consumes configure.json, generates headers, pulls down certs, etc.)
 
