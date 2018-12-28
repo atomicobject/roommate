@@ -1,6 +1,9 @@
 #include "roommate.h"
 #include <sys/time.h>    /* for timeval type */
 #include "led_utils.h"
+#include "led_control.h"
+#include "colors.h"
+#include "message_buffer.h"
 
 #define ROOMMATE_BUFFER_CAPACITY 2
 #define ROOMMATE_TASK_STACK_SIZE 2048
@@ -110,5 +113,13 @@ void handle_updated_events(struct app_state * const p_app_state, struct calendar
         configPRINTF(("LED[%d] brightness: %d!\r\n", i, this_led.brightness));
     }
 
+    struct led_control_request led_msg;
+    led_msg.type = LED_CONTROL_STEADY_STATE_REQUEST;
+    for (int i = 0; i < NUM_LEDS; i++) {
+        uint8_t brightness = led_time_chunks[i].brightness;
+        led_msg.steady_state_update_request_data.leds[i] = brightness > 0 ? AO_GREEN : 0;
+    }
 
+    MessageBufferHandle_t led_cntrl_msg_buffer = p_app_state->led_control_msg_buffer;
+    xMessageBufferSend(led_cntrl_msg_buffer, &led_msg, sizeof(struct led_control_request), portMAX_DELAY);
 }
