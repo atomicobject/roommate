@@ -13,10 +13,6 @@
 #define MQTT_AGENT_MANAGER_TASK_STACK_SIZE ( 2048 )
 #define MQTT_AGENT_MANAGER_TASK_PRIORITY   ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define MQTT_AGENT_MANAGER_CONNECT_FLAGS   ( mqttagentREQUIRE_TLS )
-
-// TODO: Figure out what to use for this identifier? What does "unique per broker" mean? Should this be something
-// like "Roommate-Klein"?
-#define CLIENT_ID                           ( ( const uint8_t * ) "CalendarEventHandler2" )
 #define MQTT_AGENT_MANAGER_TLS_NEGOTIATION_TIMEOUT   pdMS_TO_TICKS( 12000 )
 
 void maintain_mqtt_agent_connection(void * task_param);
@@ -57,16 +53,24 @@ void maintain_mqtt_agent_connection(void * task_param) {
     }
 }
 
+#define MAKE_CLIENT_ID(CLIENT_ID_NAME, P_APP_STATE ) \
+    uint8_t* _mac = P_APP_STATE->mac_address.mac; \
+    uint8_t clientId[ 6*3+20]; \
+    sprintf((char*)clientId, "%02X:%02X:%02X:%02X:%02X:%02X", _mac[0],_mac[1],_mac[2],_mac[3],_mac[4],_mac[5]);
+
 BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state ) {
     MQTTAgentReturnCode_t last_mqtt_action_result = eMQTTAgentFailure;
     BaseType_t xReturn = pdFAIL;
+
+    MAKE_CLIENT_ID(clientId, p_app_state);
+
     MQTTAgentConnectParams_t xConnectParameters =
     {
         clientcredentialMQTT_BROKER_ENDPOINT, /* The URL of the MQTT broker to connect to. */
         MQTT_AGENT_MANAGER_CONNECT_FLAGS,     /* Connection flags. */
         pdFALSE,                              /* Deprecated. */
         clientcredentialMQTT_BROKER_PORT,     /* Port number on which the MQTT broker is listening. Can be overridden by ALPN connection flag. */
-        CLIENT_ID,                            /* Client Identifier of the MQTT client. It should be unique per broker. */
+        clientId,                            /* Client Identifier of the MQTT client. It should be unique per broker. */
         0,                                    /* The length of the client Id, filled in later as not const. */
         pdFALSE,                              /* Deprecated. */
         p_app_state,                          /* User data supplied to the callback. Can be NULL. */
@@ -77,7 +81,7 @@ BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state ) {
 
     /* Check this function has not already been executed. */
     if ( p_app_state->mqtt_agent_handle == NULL ) {
-        configPRINTF( ( "MQTT Agent Manager creating agent...\r\n" ) );
+        configPRINTF( ( "MQTT Agent Manager creating agent with clientId %s...\r\n",clientId ) );
         last_mqtt_action_result = MQTT_AGENT_Create( &p_app_state->mqtt_agent_handle);
     } else {
         last_mqtt_action_result = eMQTTAgentSuccess;
@@ -90,10 +94,12 @@ BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state ) {
 
     if( last_mqtt_action_result == eMQTTAgentSuccess )
     {
+        MAKE_CLIENT_ID(clientId, p_app_state);
+
         /* Fill in the MQTTAgentConnectParams_t member that is not const,
          * and therefore could not be set in the initializer (where
          * xConnectParameters is declared in this function). */
-        xConnectParameters.usClientIdLength = ( uint16_t ) strlen( ( const char * ) CLIENT_ID );
+        xConnectParameters.usClientIdLength = ( uint16_t ) strlen( ( const char * ) clientId );
 
         /* Connect to the broker. */
         configPRINTF( ( "MQTT Agent Manager - MQTT attempting to connect to %s.\r\n", clientcredentialMQTT_BROKER_ENDPOINT ) );
