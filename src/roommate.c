@@ -62,7 +62,7 @@ void set_current_time(time_t time) {
 struct led_data {
     time_t start;
     time_t end;
-    uint8_t brightness;
+    uint32_t color;
 };
 
 struct led_control_request led_msg;
@@ -87,9 +87,10 @@ void handle_updated_events(struct app_state * const p_app_state, struct calendar
         chunk_start += seconds_per_chunk;
     }
 
-    for (int i = 0; i < NUM_LEDS; i++) {
-        struct led_data * p_this_led = &led_time_chunks[i];
-        p_this_led->brightness = 0;
+    bool first_event_is_ongoing = false;
+    for (int led = 0; led < NUM_LEDS; led++) {
+        struct led_data * p_this_led = &led_time_chunks[led];
+        p_this_led->color = AO_GREEN;
         configPRINTF(("Checking LED chunk %d to %d...\r\n", p_this_led->start, p_this_led->end ));
 
         for (int j = 0; j < p_events->num_events; j++) {
@@ -106,18 +107,23 @@ void handle_updated_events(struct app_state * const p_app_state, struct calendar
                 continue; 
             }
             // The event must fall within this LEDs time window
-            // configPRINTF(("     YOOHOOO!!\r\n"));
-            p_this_led->brightness = 100;
+            if (led == 0) {
+                first_event_is_ongoing = true;
+                p_this_led->color = AO_YELLOW;
+            } else if (first_event_is_ongoing && j == 0) {
+                p_this_led->color = AO_YELLOW;
+            } else {
+                p_this_led->color = AO_RED;
+            }
             break;
         }
 
-        configPRINTF(("LED[%d] brightness: %d!\r\n", i, p_this_led->brightness));
+        configPRINTF(("LED[%d] brightness: %d!\r\n", led, p_this_led->color));
     }
 
     led_msg.type = LED_CONTROL_STEADY_STATE_REQUEST;
     for (int i = 0; i < NUM_LEDS; i++) {
-        uint8_t brightness = led_time_chunks[i].brightness;
-        led_msg.steady_state_update_request_data.leds[i] = brightness > 0 ? AO_GREEN : 0;
+        led_msg.steady_state_update_request_data.leds[i] = led_time_chunks[i].color;
     }
 
     for (int i = 0; i < NUM_LEDS; i++) {
