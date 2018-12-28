@@ -5,6 +5,7 @@
 #include "message_buffer.h"
 
 #include <sys/time.h>                   /* gettimeofday() */
+#include "time.h"
 
 // Application Includes
 #include "experiments_task.h"
@@ -13,7 +14,7 @@
 
 void experiments_task_run( void * pvParameters );
 
-#define EXPERIMENTS_TASK_STACK_SIZE ( 900 )
+#define EXPERIMENTS_TASK_STACK_SIZE ( 2048 )
 #define EXPERIMENTS_TASK_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 
 char task_list_buffer[512];
@@ -44,6 +45,8 @@ void experiments_task_run( void * pvParameters ) {
 
   const TickType_t FIVE_SECONDS = pdMS_TO_TICKS( 5000 );
 
+  const char * testDateTime = "2018-01-03T12:00:00Z";
+
   for(;;) {
     // configPRINTF(("Sending LED Cycle message...\r\n") );
     xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_request), portMAX_DELAY);
@@ -59,6 +62,22 @@ void experiments_task_run( void * pvParameters ) {
     gettimeofday_res = gettimeofday(&tv, NULL);
 
     configPRINTF(("Current Time: %d\r\n", tv.tv_sec) );
+
+    struct tm t;
+    strptime(testDateTime, "%Y-%m-%dT%H:%M:%SZ", &t);
+    time_t foo = mktime(&t);
+
+    struct timeval new_time = {
+      .tv_sec = foo,
+      .tv_usec = 0,
+    };
+    if (tv.tv_sec < 100) {
+      settimeofday(&new_time, NULL);
+    }
+
+    // configPRINTF(("Test Time: %d\r\n", foo) );
+    // Should be 1514980800
+
 
     vTaskDelay(FIVE_SECONDS);
   }

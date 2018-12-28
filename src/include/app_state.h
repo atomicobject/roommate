@@ -11,6 +11,7 @@ struct app_state {
   MQTTAgentHandle_t mqtt_agent_handle;
   EventGroupHandle_t mqtt_agent_event_group;
   MessageBufferHandle_t aws_event_coordinator_buffer;
+  QueueHandle_t roommate_queue;
 };
 
 #endif
