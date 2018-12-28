@@ -16,7 +16,7 @@
 
 // TODO: Figure out what to use for this identifier? What does "unique per broker" mean? Should this be something
 // like "Roommate-Klein"?
-#define CLIENT_ID                           ( ( const uint8_t * ) "CalendarEventHandler" )
+#define CLIENT_ID                           ( ( const uint8_t * ) "CalendarEventHandler2" )
 #define MQTT_AGENT_MANAGER_TLS_NEGOTIATION_TIMEOUT   pdMS_TO_TICKS( 12000 )
 
 void maintain_mqtt_agent_connection(void * task_param);

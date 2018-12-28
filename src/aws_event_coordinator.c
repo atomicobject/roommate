@@ -91,18 +91,25 @@ void coordinate_events(void * p_params) {
                 switch (rx_event.type) {
                     case AWS_EVENT_CALENDAR_DATA_RECEIVED:
                     {
+                        // Update the RTC with the timestamp in the message
+                        struct tm t;
+                        struct roommate_event clock_update_event = {
+                             .type = ROOMMATE_EVENT_SET_CLOCK,
+                        };
+                        strptime(rx_event.calendar_data.current_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
+                        clock_update_event.set_clock_data.time = mktime(&t);
+                        xQueueSend(p_app_state->roommate_queue, &clock_update_event, portMAX_DELAY);
+
+                        // Extract the events from the message
                         struct calendar_events_data msg_data = {
                             .num_events = rx_event.calendar_data.num_events
                         };
-
-                        struct tm t;
                         for (int i = 0; i < rx_event.calendar_data.num_events; i++) {
                             strptime(rx_event.calendar_data.events[i].start_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
                             msg_data.events[i].start = mktime(&t);
 
                             strptime(rx_event.calendar_data.events[i].end_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
                             msg_data.events[i].end = mktime(&t);
-                            configPRINTF(("Event times: %d - %d",msg_data.events[i].start, msg_data.events[i].end ));
                         }
                         struct roommate_event calendar_event = {
                              .type = ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS,
@@ -110,10 +117,6 @@ void coordinate_events(void * p_params) {
                         };
                         xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
 
-                        calendar_event.type = ROOMMATE_EVENT_SET_CLOCK;
-                        strptime(rx_event.calendar_data.current_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
-                        calendar_event.set_clock_data.time = mktime(&t);
-                        xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
                     }
                     break;
                     case AWS_EVENT_REQUEST_CALENDAR_DATA:
