@@ -18,7 +18,6 @@
 #define AWS_EVENT_COORDINATOR_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define AWS_EVENT_COORDINATOR_CAPACITY ((size_t)3) // TODO: Think about how many we actually need here...
 
-#define roommateCalendarKlein_TOPIC_NAME         ( ( const uint8_t * ) "roommate/calendar_events/klein" )
 #define MQTT_SUBSCRIBE_TIMEOUT                   pdMS_TO_TICKS( 300 )
 
 void coordinate_events(void * p_params);
@@ -42,6 +41,10 @@ MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state 
 void coordinate_events(void * p_params) {
     struct app_state * const p_app_state = p_params;
 
+    uint8_t topic_name[128];
+    MAKE_CLIENT_ID( clientId, p_app_state);
+    sprintf((char*)topic_name,"calendar-updates/for-board/%s", clientId);
+
     configPRINTF(("Event Coordinator is starting up\r\n"));
     for (;;) {
         configASSERT((p_app_state->mqtt_agent_event_group != NULL));
@@ -56,10 +59,10 @@ void coordinate_events(void * p_params) {
 
         // Subscribe to MQTT events using the connected agent
         MQTTAgentSubscribeParams_t subscribe_params;
-        subscribe_params.pucTopic = roommateCalendarKlein_TOPIC_NAME;
+        subscribe_params.pucTopic = topic_name;
         subscribe_params.pvPublishCallbackContext = p_app_state; // Pass app_state pointer to the event callback
         subscribe_params.pxPublishCallback = handle_received_event_for_subscription;
-        subscribe_params.usTopicLength = ( uint16_t ) strlen( ( const char * ) roommateCalendarKlein_TOPIC_NAME );
+        subscribe_params.usTopicLength = ( uint16_t ) strlen( ( const char * ) topic_name);
         subscribe_params.xQoS = eMQTTQoS1; // TODO: Is this our preferred QoS
 
         configPRINTF(("Subscribing to MQTT topic: %s...\r\n", subscribe_params.pucTopic));
@@ -91,18 +94,25 @@ void coordinate_events(void * p_params) {
                 switch (rx_event.type) {
                     case AWS_EVENT_CALENDAR_DATA_RECEIVED:
                     {
+                        // Update the RTC with the timestamp in the message
+                        struct tm t;
+                        struct roommate_event clock_update_event = {
+                             .type = ROOMMATE_EVENT_SET_CLOCK,
+                        };
+                        strptime(rx_event.calendar_data.current_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
+                        clock_update_event.set_clock_data.time = mktime(&t);
+                        xQueueSend(p_app_state->roommate_queue, &clock_update_event, portMAX_DELAY);
+
+                        // Extract the events from the message
                         struct calendar_events_data msg_data = {
                             .num_events = rx_event.calendar_data.num_events
                         };
-
-                        struct tm t;
                         for (int i = 0; i < rx_event.calendar_data.num_events; i++) {
                             strptime(rx_event.calendar_data.events[i].start_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
                             msg_data.events[i].start = mktime(&t);
 
                             strptime(rx_event.calendar_data.events[i].end_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
                             msg_data.events[i].end = mktime(&t);
-                            configPRINTF(("Event times: %d - %d",msg_data.events[i].start, msg_data.events[i].end ));
                         }
                         struct roommate_event calendar_event = {
                              .type = ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS,
@@ -110,10 +120,6 @@ void coordinate_events(void * p_params) {
                         };
                         xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
 
-                        calendar_event.type = ROOMMATE_EVENT_SET_CLOCK;
-                        strptime(rx_event.calendar_data.current_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
-                        calendar_event.set_clock_data.time = mktime(&t);
-                        xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
                     }
                     break;
                     case AWS_EVENT_REQUEST_CALENDAR_DATA:

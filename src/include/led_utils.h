@@ -24,11 +24,14 @@ struct led_sequence {
     uint32_t max_frames;
 };
 
+
+const uint8_t gamma8[];
+
 #define RGBB(R, G, B, S) \
   ( \
-    ((uint32_t)((uint32_t)R * S) << 16) | \
-    ((uint32_t)((uint32_t)G * S) <<  8) | \
-    ((uint32_t)((uint32_t)B * S) <<  0)   \
+    ((uint32_t)gamma8[(uint8_t)((uint32_t)R * S)] << 16) | \
+    ((uint32_t)gamma8[(uint8_t)((uint32_t)G * S)] <<  8) | \
+    ((uint32_t)gamma8[(uint8_t)((uint32_t)B * S)] <<  0)   \
   )
 
 #define LED_STATE_ALL_OFF() (struct led_state) { \
