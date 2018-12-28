@@ -167,6 +167,8 @@ int app_main( void )
         /* Connect to the wifi before running the demos */
         prvWifiConnect();
 
+        esp_wifi_get_mac(ESP_IF_WIFI_STA, app_state.mac_address.mac);
+
         /* A simple example to demonstrate key and certificate provisioning in
         * microcontroller flash using PKCS#11 interface. This should be replaced
         * by production ready key provisioning mechanism. */
