@@ -49,7 +49,7 @@ void experiments_task_run( void * pvParameters ) {
 
   for(;;) {
     // configPRINTF(("Sending LED Cycle message...\r\n") );
-    xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_request), portMAX_DELAY);
+    // xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_request), portMAX_DELAY);
 
     memset(task_list_buffer, 0x00, sizeof(task_list_buffer));
     vTaskList(task_list_buffer);

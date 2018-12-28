@@ -172,8 +172,6 @@ int app_main( void )
         * by production ready key provisioning mechanism. */
         vDevModeKeyProvisioning();
 
-        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
-
         beginHandlingButtonPresses();
 
         mqtt_agent_manager_begin(&app_state);
