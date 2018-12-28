@@ -53,16 +53,11 @@ void maintain_mqtt_agent_connection(void * task_param) {
     }
 }
 
-#define MAKE_CLIENT_ID(CLIENT_ID_NAME, P_APP_STATE ) \
-    uint8_t* _mac = P_APP_STATE->mac_address.mac; \
-    uint8_t clientId[ 6*3+20]; \
-    sprintf((char*)clientId, "%02X:%02X:%02X:%02X:%02X:%02X", _mac[0],_mac[1],_mac[2],_mac[3],_mac[4],_mac[5]);
-
 BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state ) {
     MQTTAgentReturnCode_t last_mqtt_action_result = eMQTTAgentFailure;
     BaseType_t xReturn = pdFAIL;
 
-    MAKE_CLIENT_ID(clientId, p_app_state);
+    MAKE_CLIENT_ID( clientId, p_app_state);
 
     MQTTAgentConnectParams_t xConnectParameters =
     {

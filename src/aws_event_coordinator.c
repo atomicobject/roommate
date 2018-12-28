@@ -18,7 +18,6 @@
 #define AWS_EVENT_COORDINATOR_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define AWS_EVENT_COORDINATOR_CAPACITY ((size_t)3) // TODO: Think about how many we actually need here...
 
-#define roommateCalendarKlein_TOPIC_NAME         ( ( const uint8_t * ) "roommate/calendar_events/klein" )
 #define MQTT_SUBSCRIBE_TIMEOUT                   pdMS_TO_TICKS( 300 )
 
 void coordinate_events(void * p_params);
@@ -42,6 +41,10 @@ MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state 
 void coordinate_events(void * p_params) {
     struct app_state * const p_app_state = p_params;
 
+    uint8_t topic_name[128];
+    MAKE_CLIENT_ID( clientId, p_app_state);
+    sprintf((char*)topic_name,"calendar-updates/for-board/%s", clientId);
+
     configPRINTF(("Event Coordinator is starting up\r\n"));
     for (;;) {
         configASSERT((p_app_state->mqtt_agent_event_group != NULL));
@@ -56,10 +59,10 @@ void coordinate_events(void * p_params) {
 
         // Subscribe to MQTT events using the connected agent
         MQTTAgentSubscribeParams_t subscribe_params;
-        subscribe_params.pucTopic = roommateCalendarKlein_TOPIC_NAME;
+        subscribe_params.pucTopic = topic_name;
         subscribe_params.pvPublishCallbackContext = p_app_state; // Pass app_state pointer to the event callback
         subscribe_params.pxPublishCallback = handle_received_event_for_subscription;
-        subscribe_params.usTopicLength = ( uint16_t ) strlen( ( const char * ) roommateCalendarKlein_TOPIC_NAME );
+        subscribe_params.usTopicLength = ( uint16_t ) strlen( ( const char * ) topic_name);
         subscribe_params.xQoS = eMQTTQoS1; // TODO: Is this our preferred QoS
 
         configPRINTF(("Subscribing to MQTT topic: %s...\r\n", subscribe_params.pucTopic));
