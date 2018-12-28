@@ -1,7 +1,6 @@
 #include "led_control_hw.h"
 #include "driver/rmt.h"
 #include "esp_log.h"
-#include "FreeRTOS.h"
 #include "roommate_pinout.h"
 
 #define LED_RMT_TX_CHANNEL RMT_CHANNEL_0
