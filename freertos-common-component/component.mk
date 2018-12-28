@@ -72,6 +72,7 @@ COMPONENT_SRCDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/demo_runner \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/mqtt \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/greengrass_connectivity \
     $(AMAZON_FREERTOS_DEMOS_DIR)/common/tcp \
+    $(AMAZON_FREERTOS_DEMOS_DIR)/common/ota \
 
 
 # ROOMMATE_BOARD include must go before demos/common/include in order to get our aws_clientcredential headers:
@@ -82,7 +83,16 @@ COMPONENT_ADD_INCLUDEDIRS += $(ROOMMATE_BOARD_INCLUDE)
 COMPONENT_ADD_INCLUDEDIRS += $(AMAZON_FREERTOS_DEMOS_DIR)/common/include
 endif
 
+#### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
+ifeq ("commented","out")
+#### ==== ^^^^ END CUSTOMIZATION ^^^^ ====
 COMPONENT_PRIV_INCLUDEDIRS := $(AMAZON_FREERTOS_LIB_DIR)/third_party/pkcs11 $(AMAZON_FREERTOS_LIB_DIR)/ota/portable/espressif/esp32_devkitc_esp_wrover_kit
+#### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
+endif
+
+# it seems like pkcs11 needs to be *public*, not *private*
+COMPONENT_ADD_INCLUDEDIRS += $(AMAZON_FREERTOS_LIB_DIR)/third_party/pkcs11 
+#### ==== ^^^^ END CUSTOMIZATION ^^^^ ====
 
 #### ==== vvvv BEGIN CUSTOMIZATION vvvv ====
 ifeq ("commented","out")

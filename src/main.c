@@ -1,5 +1,5 @@
 /*
- * Amazon FreeRTOS V1.2.7
+ * Amazon FreeRTOS V1.4.4
  * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -38,6 +38,8 @@
 #include "mqtt_agent_manager.h"
 #include "aws_event_coordinator.h"
 
+#include "aws_dev_mode_key_provisioning.h"
+
 /* AWS System includes. */
 #include "aws_system_init.h"
 #include "aws_logging_task.h"
@@ -47,16 +49,24 @@
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
 
-
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_interface.h"
+
+/* Application version info. */
+#include "aws_application_version.h"
 
 /* Logging Task Defines. */
 #define mainLOGGING_MESSAGE_QUEUE_LENGTH    ( 32 )
 #define mainLOGGING_TASK_STACK_SIZE         ( configMINIMAL_STACK_SIZE * 6 )
 #define mainDEVICE_NICK_NAME                "Espressif_Demo"
 
+/* Declare the firmware version structure for all to see. */
+const AppVersion32_t xAppFirmwareVersion = {
+   .u.x.ucMajor = APP_VERSION_MAJOR,
+   .u.x.ucMinor = APP_VERSION_MINOR,
+   .u.x.usBuild = APP_VERSION_BUILD,
+};
 
 /* Static arrays for FreeRTOS+TCP stack initialization for Ethernet network connections
  * are use are below. If you are using an Ethernet connection on your MCU device it is 
@@ -128,6 +138,8 @@ static void prvWifiConnect( void );
 static void prvMiscInitialization( void );
 /*-----------------------------------------------------------*/
 
+struct app_state app_state;
+
 /**
  * @brief Application runtime entry point.
  */
@@ -136,16 +148,39 @@ int app_main( void )
     /* Perform any hardware initialization that does not require the RTOS to be
      * running.  */
     prvMiscInitialization();
-      /* Create tasks that are not dependent on the WiFi being initialized. */
+    	/* Create tasks that are not dependent on the WiFi being initialized. */
     xLoggingTaskInitialize( mainLOGGING_TASK_STACK_SIZE,
-              tskIDLE_PRIORITY + 5,
-              mainLOGGING_MESSAGE_QUEUE_LENGTH );
-
+							tskIDLE_PRIORITY + 5,
+							mainLOGGING_MESSAGE_QUEUE_LENGTH );
     FreeRTOS_IPInit( ucIPAddress,
             ucNetMask,
             ucGatewayAddress,
             ucDNSServerAddress,
             ucMACAddress );
+
+    if( SYSTEM_Init() == pdPASS )
+    {
+        /* Connect to the wifi before running the demos */
+        prvWifiConnect();
+
+        /* A simple example to demonstrate key and certificate provisioning in
+        * microcontroller flash using PKCS#11 interface. This should be replaced
+        * by production ready key provisioning mechanism. */
+        vDevModeKeyProvisioning();
+
+        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
+
+        beginHandlingButtonPresses();
+
+        mqtt_agent_manager_begin(&app_state);
+        app_state.aws_event_coordinator_buffer = aws_event_coordinator_start_coordinating(&app_state);
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        experiments_task_start(&app_state);
+
+        /* Run all demos. */
+        // DEMO_RUNNER_RunDemos();
+    }
 
     /* Start the scheduler.  Initialization that requires the OS to be running,
      * including the WiFi initialization, is performed in the RTOS daemon task
@@ -160,38 +195,18 @@ int app_main( void )
 
 static void prvMiscInitialization( void )
 {
-  // Initialize NVS
-  esp_err_t ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ret = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK( ret );
+	// Initialize NVS
+	esp_err_t ret = nvs_flash_init();
+	if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
+		ESP_ERROR_CHECK(nvs_flash_erase());
+		ret = nvs_flash_init();
+	}
+	ESP_ERROR_CHECK( ret );
 }
 /*-----------------------------------------------------------*/
 
-struct app_state app_state;
-
 void vApplicationDaemonTaskStartupHook( void )
 {
-    if( SYSTEM_Init() == pdPASS )
-    {
-        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
-
-        /* Connect to the wifi before running the demos */
-        prvWifiConnect();
-        /* Run all demos. */
-        // DEMO_RUNNER_RunDemos();
-
-
-        beginHandlingButtonPresses();
-
-        mqtt_agent_manager_begin(&app_state);
-        app_state.aws_event_coordinator_buffer = aws_event_coordinator_start_coordinating(&app_state);
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        experiments_task_start(&app_state);
-    }
 }
 /*-----------------------------------------------------------*/
 
@@ -200,7 +215,7 @@ void prvWifiConnect( void )
     WIFINetworkParams_t xNetworkParams;
     WIFIReturnCode_t xWifiStatus;
 
-    xWifiStatus = WIFI_On(); // Does nothing if already on :)
+    xWifiStatus = WIFI_On();
 
     if( xWifiStatus == eWiFiSuccess )
     {
@@ -232,6 +247,7 @@ void prvWifiConnect( void )
     {
         configPRINTF( ( "WiFi failed to connect to AP.\r\n" ) );
 
+        portDISABLE_INTERRUPTS();
         while( 1 )
         {
         }
@@ -363,13 +379,27 @@ void vApplicationStackOverflowHook( TaskHandle_t xTask,
                                     char * pcTaskName )
 {
     configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
-    // portDISABLE_INTERRUPTS();
+    portDISABLE_INTERRUPTS();
 
-    // /* Loop forever */
-    // for( ; ; )
-    // {
-    // }
+    /* Loop forever */
+    for( ; ; )
+    {
+    }
 }
+/*-----------------------------------------------------------*/
+extern void esp_vApplicationTickHook();
+void IRAM_ATTR vApplicationTickHook()
+{
+    esp_vApplicationTickHook();
+}
+
+/*-----------------------------------------------------------*/
+extern void esp_vApplicationIdleHook();
+void vApplicationIdleHook()
+{
+    esp_vApplicationIdleHook();
+}
+
 /*-----------------------------------------------------------*/
 void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
 {
@@ -391,8 +421,5 @@ void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
         evt.event_info.got_ip.ip_info.netmask.addr = ulNetMask;
         evt.event_info.got_ip.ip_info.gw.addr = ulGatewayAddress;
         esp_event_send(&evt);
-    } else if (eNetworkEvent == eNetworkDown) {
-        
-        configPRINTF( ( "WIFI is DOWN behind enemy lines - go rescue it!\r\n" ) );
     }
 }
