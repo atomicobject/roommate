@@ -4,6 +4,8 @@
 #include "led_control.h"
 #include "colors.h"
 #include "message_buffer.h"
+#include <sys/time.h>
+#include "time.h"
 
 #define ROOMMATE_BUFFER_CAPACITY 2
 #define ROOMMATE_TASK_STACK_SIZE 2048
@@ -11,7 +13,11 @@
 
 void roommate_task(void * p_context);
 void set_current_time(time_t time);
+void minute_timer_callback(TimerHandle_t timer);
+void reset_minute_alarm(TimerHandle_t minute_timer, time_t time);
 void handle_updated_events(struct app_state * const p_app_state, struct calendar_events_data * const p_events);
+
+const TickType_t ONE_MINUTE_TICKS = pdMS_TO_MIN_TICKS(60000);
 
 QueueHandle_t roommate_begin(struct app_state * const p_app_state) {
     QueueHandle_t queue_handle = xQueueCreate(ROOMMATE_BUFFER_CAPACITY, sizeof(struct roommate_event));
@@ -33,6 +39,12 @@ void roommate_task(void * p_context) {
         .num_events = 0
     };
 
+    TimerHandle_t minute_timer = xTimerCreate("minute_timer",
+                 1, // Initial period doesn't matter. Timer is created in dormant state.
+                 pdTRUE,
+                 p_app_state->roommate_queue, // Give the timer access to the queue so it can dispatch events
+                 minute_timer_callback);
+
     for(;;) {
         struct roommate_event event;
         xQueueReceive(p_app_state->roommate_queue, &event, portMAX_DELAY);
@@ -40,18 +52,60 @@ void roommate_task(void * p_context) {
         switch (event.type) {
             case ROOMMATE_EVENT_SET_CLOCK:
                 set_current_time(event.set_clock_data.time);
+                reset_minute_alarm(minute_timer, event.set_clock_data.time);
                 handle_updated_events(p_app_state, &current_calendar_events);
             break;
             case ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS:
                 current_calendar_events = event.calendar_events_data;
                 handle_updated_events(p_app_state, &current_calendar_events);
             break;
+            case ROOMMATE_EVENT_REEVALUATE_CALENDAR_EVENTS:
+                handle_updated_events(p_app_state, &current_calendar_events);
+            break;
         }
     }
 }
 
+void reset_minute_alarm(TimerHandle_t minute_timer, time_t time) {
+    TickType_t ticks_until_next_minute = ONE_MINUTE_TICKS - (time % ONE_MINUTE_TICKS);
+    xTimerChangePeriod(minute_timer, ticks_until_next_minute, portMAX_DELAY);
+    xTimerStart(minute_timer, portMAX_DELAY);
+    configPRINTF(("Timer started!\r\n"));
+
+    char buff[20];
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&tv.tv_sec));
+    configPRINTF(("Current time is %s!\r\n", &buff[0]));
+    configPRINT_STRING(buff);
+}
+
+void minute_timer_callback(TimerHandle_t timer) {
+    TickType_t period = xTimerGetPeriod(timer);
+    if(period != ONE_MINUTE_TICKS) {
+        xTimerChangePeriod(timer, ONE_MINUTE_TICKS, portMAX_DELAY);
+        configPRINTF(("Updated timer period!\r\n"));
+    } else {
+        configPRINTF(("Timer ticked - period already 1 second!\r\n"));
+    }
+
+    char buff[20];
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&tv.tv_sec));
+    configPRINTF(("Current time is %s!\r\n", &buff[0]));
+    configPRINT_STRING(buff);
+
+    QueueHandle_t roommate_queue = pvTimerGetTimerID(timer);
+    struct roommate_event event = {
+        .type = ROOMMATE_EVENT_REEVALUATE_CALENDAR_EVENTS
+    };
+    xQueueSend(roommate_queue, &event, portMAX_DELAY);
+
+}
+
 void set_current_time(time_t time) {
-     configPRINTF(("Roommate task setting current time!\r\n"));
+    configPRINTF(("Roommate task setting current time!\r\n"));
     struct timeval new_time = {
       .tv_sec = time,
       .tv_usec = 0,
