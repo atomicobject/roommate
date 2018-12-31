@@ -67,17 +67,27 @@ void roommate_task(void * p_context) {
 }
 
 void reset_minute_alarm(TimerHandle_t minute_timer, time_t time) {
-    TickType_t ticks_until_next_minute = ONE_MINUTE_TICKS - (time % ONE_MINUTE_TICKS);
+    time_t seconds_until_next_minute = 60 - (time % 60);
+    TickType_t ticks_until_next_minute = pdMS_TO_TICKS(seconds_until_next_minute * 1000);
     xTimerChangePeriod(minute_timer, ticks_until_next_minute, portMAX_DELAY);
     xTimerStart(minute_timer, portMAX_DELAY);
-    configPRINTF(("Timer started!\r\n"));
+    configPRINTF(("Timer started with initial period %d seconds\r\n", seconds_until_next_minute));
 
-    char buff[20];
+    char buff[25];
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&tv.tv_sec));
+    struct tm * time_str  = localtime(&tv.tv_sec);
+
+    configPRINTF(("Current time year: %d \r\n", time_str->tm_year));
+    configPRINTF(("Current time month: %d \r\n", time_str->tm_mon));
+    configPRINTF(("Current time day: %d \r\n", time_str->tm_mday));
+    configPRINTF(("Current time hour: %d \r\n", time_str->tm_hour));
+    configPRINTF(("Current time minute: %d \r\n", time_str->tm_min));
+    configPRINTF(("Current time second: %d \r\n", time_str->tm_sec));
+
+    strftime(buff, 25, "%Y-%m-%d %H:%M:%S", time_str);
     configPRINTF(("Current time is %s!\r\n", &buff[0]));
-    configPRINT_STRING(buff);
+    configPRINT(buff);
 }
 
 void minute_timer_callback(TimerHandle_t timer) {
@@ -89,12 +99,20 @@ void minute_timer_callback(TimerHandle_t timer) {
         configPRINTF(("Timer ticked - period already 1 second!\r\n"));
     }
 
-    char buff[20];
+    char buff[25];
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    strftime(buff, 20, "%Y-%m-%d %H:%M:%S", localtime(&tv.tv_sec));
+    struct tm * time_str  = localtime(&tv.tv_sec);
+    strftime(buff, 25, "%Y-%m-%d %H:%M:%S", time_str);
     configPRINTF(("Current time is %s!\r\n", &buff[0]));
-    configPRINT_STRING(buff);
+    configPRINT(buff);
+
+    configPRINTF(("Current time year: %d \r\n", time_str->tm_year));
+    configPRINTF(("Current time month: %d \r\n", time_str->tm_mon));
+    configPRINTF(("Current time day: %d \r\n", time_str->tm_mday));
+    configPRINTF(("Current time hour: %d \r\n", time_str->tm_hour));
+    configPRINTF(("Current time minute: %d \r\n", time_str->tm_min));
+    configPRINTF(("Current time second: %d \r\n", time_str->tm_sec));
 
     QueueHandle_t roommate_queue = pvTimerGetTimerID(timer);
     struct roommate_event event = {
