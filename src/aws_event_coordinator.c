@@ -128,6 +128,21 @@ void coordinate_events(void * p_params) {
                     case AWS_EVENT_REQUEST_CALENDAR_DATA:
                     break;
                     case AWS_EVENT_REQUEST_ROOM_HOLD:
+                        {   
+                            const char * topic = "reservation-request";
+                            MQTTAgentPublishParams_t const publish_params = {
+                                .pucTopic = (uint8_t *)topic, /**< The topic string on which the message should be published. */
+                                .usTopicLength = strlen(topic),   /**< The length of the topic. */
+                                .xQoS = eMQTTQoS1,           /**< Quality of Service (QoS). */
+                                .pvData = NULL,      /**< The data to publish. This data is copied into the MQTT buffers and therefore the user can free the buffer after the MQTT_AGENT_Publish call returns. */
+                                .ulDataLength = 0,    /**< Length of the data. */
+                            };
+                            configPRINTF(("Attempting to publish MQTT msg to reserve room\r\n"));
+                            MQTTAgentReturnCode_t publish_result = MQTT_AGENT_Publish(
+                                p_app_state->mqtt_agent_handle,
+                                &publish_params, 
+                                pdMS_TO_TICKS(5000));
+                        }
                     break;
                 }
             }

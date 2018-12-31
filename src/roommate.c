@@ -5,6 +5,7 @@
 #include "colors.h"
 #include <sys/time.h>
 #include "time.h"
+#include "aws_event_coordinator.h"
 
 #define ROOMMATE_BUFFER_CAPACITY 2
 #define ROOMMATE_TASK_STACK_SIZE 2048
@@ -15,6 +16,7 @@ void set_current_time(time_t time);
 void minute_timer_callback(TimerHandle_t timer);
 void reset_minute_alarm(TimerHandle_t minute_timer, time_t time);
 void handle_updated_events(struct app_state * const p_app_state, struct calendar_events_data * const p_events);
+void extend_or_reserve_room(struct app_state * const p_app_state);
 
 const TickType_t ONE_MINUTE_TICKS = pdMS_TO_MIN_TICKS(60000);
 
@@ -61,8 +63,21 @@ void roommate_task(void * p_context) {
             case ROOMMATE_EVENT_REEVALUATE_CALENDAR_EVENTS:
                 handle_updated_events(p_app_state, &current_calendar_events);
             break;
+            case ROOMMATE_EVENT_HANDLE_SHORT_BUTTON_PRESS:
+                extend_or_reserve_room(p_app_state);
+            break;
+
         }
     }
+}
+
+void extend_or_reserve_room(struct app_state * const p_app_state) {
+    struct aws_event aws_msg = {
+        .type = AWS_EVENT_REQUEST_ROOM_HOLD,
+    };
+
+    configPRINTF(("Sending message to aws_event_coordinator to reserve room\r\n"));
+    xQueueSend(p_app_state->aws_event_coordinator_queue, &aws_msg, portMAX_DELAY);
 }
 
 void reset_minute_alarm(TimerHandle_t minute_timer, time_t time) {

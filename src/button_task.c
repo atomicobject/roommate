@@ -11,6 +11,9 @@
 #include "driver/gpio.h"
 
 #include "roommate_pinout.h"
+#include "app_state.h"
+#include "roommate.h"
+
 
 static xQueueHandle gpio_evt_queue = NULL;
 
@@ -37,8 +40,9 @@ static TickType_t last_tick = 0;
 
 #define TICKS_TO_MS(tick) ((tick)*1000uL / (uint32_t)configTICK_RATE_HZ)
 
-static void button_task(void* arg)
+static void button_task(void * arg)
 {
+    struct app_state * const p_app_state = arg;
     struct buttonEvent buttonEvent;
     for(;;) {
         if(xQueueReceive(gpio_evt_queue, &buttonEvent, portMAX_DELAY)) {
@@ -54,6 +58,11 @@ static void button_task(void* arg)
                         TickType_t duration = buttonEvent.tick_count - last_tick;
                         int ms = TICKS_TO_MS(duration);
                         configPRINTF(("Button UP after %d ms (%d ticks)\n", ms, duration));
+
+                        struct roommate_event event = {
+                            .type = ROOMMATE_EVENT_HANDLE_SHORT_BUTTON_PRESS,
+                        };
+                        xQueueSend(p_app_state->roommate_event_queue, &event, portMAX_DELAY);
                     }
                     break;
             }
@@ -64,7 +73,7 @@ static void button_task(void* arg)
 #define GPIO_INPUT_BITMASK (1ULL<<BUTTON_INPUT_GPIO)
 #define ESP_INTR_FLAG_DEFAULT 0
 
-void beginHandlingButtonPresses(){
+void button_task_begin_handling_presses(struct app_state * const p_app_state) {
     gpio_config_t io_conf;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = GPIO_INPUT_BITMASK;
@@ -77,7 +86,7 @@ void beginHandlingButtonPresses(){
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(struct buttonEvent));
     //start gpio task
-    xTaskCreate(button_task, "ButtonTask", 512*3, NULL, 10, NULL);
+    xTaskCreate(button_task, "ButtonTask", 512*3, p_app_state, 10, NULL);
 
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);

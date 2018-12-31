@@ -174,7 +174,7 @@ int app_main( void )
         * by production ready key provisioning mechanism. */
         vDevModeKeyProvisioning();
 
-        beginHandlingButtonPresses();
+        button_task_begin_handling_presses(&app_state);
 
         mqtt_agent_manager_begin(&app_state);
         app_state.aws_event_coordinator_queue = aws_event_coordinator_start_coordinating(&app_state);
