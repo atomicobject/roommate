@@ -27,7 +27,7 @@ void experiments_task_start(struct app_state * p_app_state) {
     ( void ) xTaskCreate( experiments_task_run,                  /* The function that implements the demo task. */
                           "ExperimentsTask",                       /* The name to assign to the task being created. */
                           EXPERIMENTS_TASK_STACK_SIZE,           /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
-                          p_app_state->led_control_msg_buffer, /* The task parameter is not being used. */
+                          p_app_state->led_control_queue, /* The task parameter is not being used. */
                           EXPERIMENTS_TASK_TASK_PRIORITY,        /* The priority at which the task being created will run. */
                           NULL );                              /* Not storing the task's handle. */
 }
@@ -48,7 +48,7 @@ void experiments_task_run( void * pvParameters ) {
 
   for(;;) {
     // configPRINTF(("Sending LED Cycle message...\r\n") );
-    // xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_request), portMAX_DELAY);
+    // xQueueSend(msg_buffer_handle, &msg, portMAX_DELAY);
 
 
     memset(task_list_buffer, 0x00, sizeof(task_list_buffer));

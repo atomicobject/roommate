@@ -3,7 +3,6 @@
 #include "led_utils.h"
 #include "led_control.h"
 #include "colors.h"
-#include "message_buffer.h"
 #include <sys/time.h>
 #include "time.h"
 
@@ -42,12 +41,12 @@ void roommate_task(void * p_context) {
     TimerHandle_t minute_timer = xTimerCreate("minute_timer",
                  1, // Initial period doesn't matter. Timer is created in dormant state.
                  pdTRUE,
-                 p_app_state->roommate_queue, // Give the timer access to the queue so it can dispatch events
+                 p_app_state->roommate_event_queue, // Give the timer access to the queue so it can dispatch events
                  minute_timer_callback);
 
     for(;;) {
         struct roommate_event event;
-        xQueueReceive(p_app_state->roommate_queue, &event, portMAX_DELAY);
+        xQueueReceive(p_app_state->roommate_event_queue, &event, portMAX_DELAY);
         configPRINTF(("Roommate task received an event!\r\n"));
         switch (event.type) {
             case ROOMMATE_EVENT_SET_CLOCK:
@@ -202,6 +201,6 @@ void handle_updated_events(struct app_state * const p_app_state, struct calendar
         configPRINTF(("LED[%d]: %d\r\n", i, led_msg.steady_state_update_request_data.leds[i]));
     }
 
-    MessageBufferHandle_t led_cntrl_msg_buffer = p_app_state->led_control_msg_buffer;
-    xMessageBufferSend(led_cntrl_msg_buffer, &led_msg, sizeof(struct led_control_request), portMAX_DELAY);
+    QueueHandle_t led_cntrl_msg_buffer = p_app_state->led_control_queue;
+    xQueueSend(led_cntrl_msg_buffer, &led_msg, portMAX_DELAY);
 }

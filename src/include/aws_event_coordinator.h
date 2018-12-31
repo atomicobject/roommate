@@ -4,7 +4,7 @@
 #include "roommate.h"
 
 // FreeRTOS Includes
-#include "message_buffer.h"
+#include "queue.h"
 #include "app_state.h"
 
 enum aws_event_type {
@@ -27,6 +27,6 @@ struct aws_event {
     };
 };
 
-MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state * const p_app_state);
+QueueHandle_t aws_event_coordinator_start_coordinating(struct app_state * const p_app_state);
 
 #endif

@@ -161,8 +161,8 @@ int app_main( void )
 
     if( SYSTEM_Init() == pdPASS )
     {
-        app_state.roommate_queue = roommate_begin(&app_state);
-        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
+        app_state.roommate_event_queue = roommate_begin(&app_state);
+        app_state.led_control_queue = led_control_start_controlling_leds();
 
         /* Connect to the wifi before running the demos */
         prvWifiConnect();
@@ -177,7 +177,7 @@ int app_main( void )
         beginHandlingButtonPresses();
 
         mqtt_agent_manager_begin(&app_state);
-        app_state.aws_event_coordinator_buffer = aws_event_coordinator_start_coordinating(&app_state);
+        app_state.aws_event_coordinator_queue = aws_event_coordinator_start_coordinating(&app_state);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
         experiments_task_start(&app_state);

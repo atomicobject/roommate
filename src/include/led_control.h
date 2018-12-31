@@ -2,14 +2,12 @@
 #define LED_CONTROL_H
 #include "led_control_hw.h"
 #include <stdint.h>
-#include "message_buffer.h"
-
+#include "queue.h"
 
 enum led_control_request_type { 
     LED_CONTROL_SEQUENCE_REQUEST, 
     LED_CONTROL_STEADY_STATE_REQUEST,
 };
-
 
 struct led_control_request {
     enum led_control_request_type type;
@@ -19,6 +17,6 @@ struct led_control_request {
     };
 };
 
-MessageBufferHandle_t led_control_start_controlling_leds(void);
+QueueHandle_t led_control_start_controlling_leds(void);
 
 #endif

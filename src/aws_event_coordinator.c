@@ -1,6 +1,5 @@
 #include "FreeRTOS.h"
 #include "task.h"
-#include "message_buffer.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -23,9 +22,9 @@
 void coordinate_events(void * p_params);
 static MQTTBool_t handle_received_event_for_subscription( void * p_context, const MQTTPublishData_t * const p_publish_parameters );
 
-MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state * const p_app_state) {
-    MessageBufferHandle_t msg_buffer_handle = xMessageBufferCreate( (sizeof(struct aws_event) + sizeof(size_t)) * AWS_EVENT_COORDINATOR_CAPACITY);
-    configASSERT( msg_buffer_handle != NULL );
+QueueHandle_t aws_event_coordinator_start_coordinating(struct app_state * const p_app_state) {
+    QueueHandle_t queue_handle = xQueueCreate(AWS_EVENT_COORDINATOR_CAPACITY, sizeof(struct aws_event));
+    configASSERT( queue_handle != NULL );
 
     ( void ) xTaskCreate( coordinate_events,                    /* The function that implements the demo task. */
                           "AWS Event Coord",                    /* The name to assign to the task being created. */
@@ -34,7 +33,7 @@ MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state 
                           AWS_EVENT_COORDINATOR_TASK_PRIORITY,  /* The priority at which the task being created will run. */
                           NULL );                               /* Not storing the task's handle. */
 
-    return msg_buffer_handle;
+    return queue_handle;
 }
 
 
@@ -87,9 +86,13 @@ void coordinate_events(void * p_params) {
                                                     pdFALSE, //const BaseType_t xWaitForAllBits, 
                                                     portMAX_DELAY); //TickType_t xTicksToWait )
             if (bitsSet & MQTT_EVENT_RX_DATA_READY) {
-                configPRINTF(("Event Coordinator got an event. Get it out of the buffer...\r\n"));
+                configPRINTF(("Event Coordinator got an event. Get it out of the queue...\r\n"));
                 struct aws_event rx_event;
-                size_t received_bytes = xMessageBufferReceive(p_app_state->aws_event_coordinator_buffer, &rx_event, sizeof(struct aws_event), 100);
+                BaseType_t event_received = xQueueReceive(p_app_state->aws_event_coordinator_queue, &rx_event, 100);
+                if (event_received != pdTRUE) {
+                    configPRINTF(("ERROR - Event Received bit was set but no event was received. How happen?\r\n"));
+                    continue;
+                }
 
                 switch (rx_event.type) {
                     case AWS_EVENT_CALENDAR_DATA_RECEIVED:
@@ -101,7 +104,7 @@ void coordinate_events(void * p_params) {
                         };
                         strptime(rx_event.calendar_data.current_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
                         clock_update_event.set_clock_data.time = mktime(&t);
-                        xQueueSend(p_app_state->roommate_queue, &clock_update_event, portMAX_DELAY);
+                        xQueueSend(p_app_state->roommate_event_queue, &clock_update_event, portMAX_DELAY);
 
                         // Extract the events from the message
                         struct calendar_events_data msg_data = {
@@ -118,7 +121,7 @@ void coordinate_events(void * p_params) {
                              .type = ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS,
                              .calendar_events_data = msg_data,
                         };
-                        xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
+                        xQueueSend(p_app_state->roommate_event_queue, &calendar_event, portMAX_DELAY);
 
                     }
                     break;
@@ -239,7 +242,7 @@ static MQTTBool_t handle_received_event_for_subscription( void * p_context,
         .calendar_data = extracted_calendar_data,
     };
 
-    xMessageBufferSend(p_app_state->aws_event_coordinator_buffer, &event, sizeof(struct aws_event), portMAX_DELAY);
+    xQueueSend(p_app_state->aws_event_coordinator_queue, &event, portMAX_DELAY);
     xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_RX_DATA_READY);
 
     /* The data was copied into the FreeRTOS message buffer, so the buffer
