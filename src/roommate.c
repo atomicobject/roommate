@@ -136,7 +136,6 @@ struct led_data {
     uint32_t color;
 };
 
-struct led_control_request led_msg;
 void handle_updated_events(struct app_state * const p_app_state, struct calendar_events_data * const p_events) {
     configPRINTF(("Roommate task updating %d new calendar events!\r\n", p_events->num_events));
     
@@ -192,6 +191,7 @@ void handle_updated_events(struct app_state * const p_app_state, struct calendar
         configPRINTF(("LED[%d] brightness: %d!\r\n", led, p_this_led->color));
     }
 
+    struct led_control_request led_msg;
     led_msg.type = LED_CONTROL_STEADY_STATE_REQUEST;
     for (int i = 0; i < NUM_LEDS; i++) {
         led_msg.steady_state_update_request_data.leds[i] = led_time_chunks[i].color;

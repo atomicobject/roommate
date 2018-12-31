@@ -250,6 +250,7 @@ void prvWifiConnect( void )
     else
     {
         configPRINTF( ( "WiFi failed to connect to AP.\r\n" ) );
+        assert(false);
 
         portDISABLE_INTERRUPTS();
         while( 1 )
