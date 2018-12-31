@@ -81,11 +81,11 @@ void coordinate_events(void * p_params) {
             configPRINTF(("Event Coordinator waiting for agent disconencted or data ready\r\n"));
             EventBits_t bitsSet = xEventGroupWaitBits( p_app_state->mqtt_agent_event_group, //const EventGroupHandle_t xEventGroup, 
                                                     MQTT_EVENT_AGENT_DISCONNECTED | 
-                                                    MQTT_EVENT_RX_DATA_READY, //const EventBits_t uxBitsToWaitFor, 
+                                                    MQTT_EVENT_DATA_READY, //const EventBits_t uxBitsToWaitFor, 
                                                     pdTRUE, // const BaseType_t xClearOnExit, 
                                                     pdFALSE, //const BaseType_t xWaitForAllBits, 
                                                     portMAX_DELAY); //TickType_t xTicksToWait )
-            if (bitsSet & MQTT_EVENT_RX_DATA_READY) {
+            if (bitsSet & MQTT_EVENT_DATA_READY) {
                 configPRINTF(("Event Coordinator got an event. Get it out of the queue...\r\n"));
                 struct aws_event rx_event;
                 BaseType_t event_received = xQueueReceive(p_app_state->aws_event_coordinator_queue, &rx_event, 100);
@@ -258,7 +258,7 @@ static MQTTBool_t handle_received_event_for_subscription( void * p_context,
     };
 
     xQueueSend(p_app_state->aws_event_coordinator_queue, &event, portMAX_DELAY);
-    xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_RX_DATA_READY);
+    xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_DATA_READY);
 
     /* The data was copied into the FreeRTOS message buffer, so the buffer
      * containing the data is no longer required.  Returning eMQTTFalse tells the

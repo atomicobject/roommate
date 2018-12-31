@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include "time.h"
 #include "aws_event_coordinator.h"
+#include "mqtt_event_group_flags.h"
 
 #define ROOMMATE_BUFFER_CAPACITY 2
 #define ROOMMATE_TASK_STACK_SIZE 2048
@@ -77,7 +78,9 @@ void extend_or_reserve_room(struct app_state * const p_app_state) {
     };
 
     configPRINTF(("Sending message to aws_event_coordinator to reserve room\r\n"));
-    xQueueSend(p_app_state->aws_event_coordinator_queue, &aws_msg, portMAX_DELAY);
+    BaseType_t result = xQueueSend(p_app_state->aws_event_coordinator_queue, &aws_msg, portMAX_DELAY);
+    xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_DATA_READY);
+    configPRINTF(("result %d\n", result));
 }
 
 void reset_minute_alarm(TimerHandle_t minute_timer, time_t time) {
