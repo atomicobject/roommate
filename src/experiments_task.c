@@ -35,49 +35,29 @@ void experiments_task_start(struct app_state * p_app_state) {
 void experiments_task_run( void * pvParameters ) {
   // configPRINTF(("Running LED Cycle Task!\r\n") );
   MessageBufferHandle_t msg_buffer_handle = pvParameters;
+  (void)msg_buffer_handle;
 
 
   struct led_control_request msg = {
     .type = LED_CONTROL_SEQUENCE_REQUEST,
     .sequence_request_data = led_sequence_newtons_cradle(),
   };
-
+  (void)msg;
 
   const TickType_t FIVE_SECONDS = pdMS_TO_TICKS( 5000 );
-
-  const char * testDateTime = "2018-01-03T12:00:00Z";
 
   for(;;) {
     // configPRINTF(("Sending LED Cycle message...\r\n") );
     // xMessageBufferSend(msg_buffer_handle, &msg, sizeof(struct led_control_request), portMAX_DELAY);
 
+
     memset(task_list_buffer, 0x00, sizeof(task_list_buffer));
     vTaskList(task_list_buffer);
     configPRINTF(("Task Info: len(%d)\r\n", strlen(task_list_buffer)));
     configPRINT(task_list_buffer);
-
-
-    struct timeval tv;
-    int gettimeofday_res;
-    gettimeofday_res = gettimeofday(&tv, NULL);
-
-    configPRINTF(("Current Time: %d\r\n", tv.tv_sec) );
-
-    struct tm t;
-    strptime(testDateTime, "%Y-%m-%dT%H:%M:%SZ", &t);
-    time_t foo = mktime(&t);
-
-    struct timeval new_time = {
-      .tv_sec = foo,
-      .tv_usec = 0,
-    };
-    if (tv.tv_sec < 100) {
-      settimeofday(&new_time, NULL);
-    }
-
-    // configPRINTF(("Test Time: %d\r\n", foo) );
-    // Should be 1514980800
-
+    /* Output Format:
+    | Task name | Task State | Task Priority | Stack Highwater Mark | Task Id |
+    */
 
     vTaskDelay(FIVE_SECONDS);
   }

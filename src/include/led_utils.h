@@ -25,7 +25,7 @@ struct led_sequence {
 };
 
 
-const uint8_t gamma8[];
+const uint8_t gamma8[256];
 
 #define RGBB(R, G, B, S) \
   ( \

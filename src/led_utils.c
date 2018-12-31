@@ -1,7 +1,7 @@
 #include "led_utils.h"
 
 // https://learn.adafruit.com/led-tricks-gamma-correction/the-quick-fix
-const uint8_t gamma8[] = {
+const uint8_t gamma8[256] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
     1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,

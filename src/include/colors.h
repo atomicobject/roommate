@@ -11,6 +11,4 @@
 #define GREEN 0x002A00
 #define LED_OFF 0x000000
 
-
-
 #endif

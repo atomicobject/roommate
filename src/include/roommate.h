@@ -9,6 +9,7 @@
 enum roommate_event_type {
     ROOMMATE_EVENT_SET_CLOCK,
     ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS,
+    ROOMMATE_EVENT_REEVALUATE_CALENDAR_EVENTS,
 };
 
 struct clock_info {
