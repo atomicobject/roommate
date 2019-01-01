@@ -4,7 +4,6 @@
 #include "aws_mqtt_agent.h"
 #include "semphr.h"
 #include "event_groups.h"
-
 #include "FreeRTOS_IP.h"
 
 #define COUNT_OF( arr ) (sizeof(arr)/sizeof(arr[0]))

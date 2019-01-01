@@ -180,7 +180,7 @@ int app_main( void )
         app_state.aws_event_coordinator_queue = aws_event_coordinator_start_coordinating(&app_state);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
-        experiments_task_start(&app_state);
+        // experiments_task_start(&app_state);
 
         /* Run all demos. */
         // DEMO_RUNNER_RunDemos();

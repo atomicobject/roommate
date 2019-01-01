@@ -6,13 +6,9 @@ void setup_led_boundaries(struct led_boundaries * p_boundaries, time_t start, ti
 
 TEST_GROUP(CalUtil);
 
-TEST_SETUP(CalUtil)
-{
-}
+TEST_SETUP(CalUtil) { }
 
-TEST_TEAR_DOWN(CalUtil)
-{
-}
+TEST_TEAR_DOWN(CalUtil) { }
 
 TEST(CalUtil, cal_util_get_led_statuses_indicates_current_meeting_for_first_led)
 {

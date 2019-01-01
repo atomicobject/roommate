@@ -1,24 +1,21 @@
 #include "roommate.h"
-#include <sys/time.h>    /* for timeval type */
 #include "led_utils.h"
 #include "led_control.h"
-#include "colors.h"
-#include <sys/time.h>
-#include "time.h"
 #include "aws_event_coordinator.h"
 #include "mqtt_event_group_flags.h"
 #include "cal_util.h"
+#include "time_utils.h"
+#include "led_sequence.h"
 
 #define ROOMMATE_BUFFER_CAPACITY 2
 #define ROOMMATE_TASK_STACK_SIZE 2048
 #define ROOMMATE_TASK_PRIORITY   1
 
 void roommate_task(void * p_context);
-void set_current_time(time_t time);
 void minute_timer_callback(TimerHandle_t timer);
 void reset_minute_alarm(TimerHandle_t minute_timer, time_t time);
 void handle_updated_events(struct app_state * const p_app_state, struct calendar_events_data * const p_events);
-void extend_or_reserve_room(struct app_state * const p_app_state);
+void extend_or_reserve_room(struct app_state * const p_app_state, struct calendar_events_data * const p_events);
 
 const TickType_t ONE_MINUTE_TICKS = pdMS_TO_MIN_TICKS(60000);
 
@@ -54,7 +51,7 @@ void roommate_task(void * p_context) {
         configPRINTF(("Roommate task received an event!\r\n"));
         switch (event.type) {
             case ROOMMATE_EVENT_SET_CLOCK:
-                set_current_time(event.set_clock_data.time);
+                time_utils_set_current_time(event.set_clock_data.time);
                 reset_minute_alarm(minute_timer, event.set_clock_data.time);
                 handle_updated_events(p_app_state, &current_calendar_events);
             break;
@@ -66,22 +63,10 @@ void roommate_task(void * p_context) {
                 handle_updated_events(p_app_state, &current_calendar_events);
             break;
             case ROOMMATE_EVENT_HANDLE_SHORT_BUTTON_PRESS:
-                extend_or_reserve_room(p_app_state);
+                extend_or_reserve_room(p_app_state, &current_calendar_events);
             break;
-
         }
     }
-}
-
-void extend_or_reserve_room(struct app_state * const p_app_state) {
-    struct aws_event aws_msg = {
-        .type = AWS_EVENT_REQUEST_ROOM_HOLD,
-    };
-
-    configPRINTF(("Sending message to aws_event_coordinator to reserve room\r\n"));
-    BaseType_t result = xQueueSend(p_app_state->aws_event_coordinator_queue, &aws_msg, portMAX_DELAY);
-    xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_DATA_READY);
-    configPRINTF(("result %d\n", result));
 }
 
 void reset_minute_alarm(TimerHandle_t minute_timer, time_t time) {
@@ -92,6 +77,7 @@ void reset_minute_alarm(TimerHandle_t minute_timer, time_t time) {
 }
 
 void minute_timer_callback(TimerHandle_t timer) {
+    configPRINTF(("Minute timer expired. Refresh LEDs!\r\n"));
     TickType_t period = xTimerGetPeriod(timer);
     if(period != ONE_MINUTE_TICKS) {
         xTimerChangePeriod(timer, ONE_MINUTE_TICKS, portMAX_DELAY);
@@ -104,38 +90,68 @@ void minute_timer_callback(TimerHandle_t timer) {
     xQueueSend(roommate_queue, &event, portMAX_DELAY);
 }
 
-void set_current_time(time_t time) {
-    configPRINTF(("Roommate task setting current time!\r\n"));
-    struct timeval new_time = {
-      .tv_sec = time,
-      .tv_usec = 0,
-    };
-    settimeofday(&new_time, NULL); // NULL is for timezone, we don't need timezone since
-}
-
-
-void handle_updated_events(struct app_state * const p_app_state, struct calendar_events_data * const p_events) {
-    configPRINTF(("Updating %d calendar events!\r\n", p_events->num_events));
-
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    configPRINTF(("Current time is:%ul\r\n", tv.tv_sec));
-
+bool get_time_range_to_book(struct calendar_events_data * const p_events, 
+                            struct time_range * p_time_range_out) {
     struct led_boundaries led_time_chunks;
-    cal_util_get_led_boundaries(tv.tv_sec, &led_time_chunks);
-
+    time_t current_time = time_utils_get_current_time();
+    cal_util_get_led_boundaries(current_time, &led_time_chunks);
     struct led_statuses led_statuses = cal_util_get_led_statuses(&led_time_chunks, p_events);
 
+    if (led_statuses.leds[0] == LED_STATUS_ROOM_AVAILABLE) {
+        // Reserve room for the first boundary
+        *p_time_range_out = led_time_chunks.leds[0];
+        return true;
+    } else {
+        // Find the first window that is not current meeting
+        for (int i = 0; i < NUM_LEDS; i++){
+            enum led_status status = led_statuses.leds[i];
+            if (status != LED_STATUS_CURRENT_MEETING) {
+                if (status == LED_STATUS_ROOM_AVAILABLE) {
+                    // We can extend the meeting to this time window!
+                    *p_time_range_out = led_time_chunks.leds[i];
+                    return true;
+                }
+                // Can't book. There's a future meeting.
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
+void extend_or_reserve_room(struct app_state * const p_app_state, struct calendar_events_data * const p_events) {
+    // At this point we cannot extend or reserve a room. Send the shakes head gesture.
+    struct time_range range_to_book;
+    if (get_time_range_to_book(p_events, &range_to_book)) {
+        struct aws_event aws_msg = {
+            .type = AWS_EVENT_REQUEST_ROOM_HOLD,
+        };
+        aws_msg.room_hold_data.start = range_to_book.start;
+        aws_msg.room_hold_data.finish = range_to_book.end;
+        configPRINTF(("Sending message to aws_event_coordinator to reserve room\r\n"));
+        xQueueSend(p_app_state->aws_event_coordinator_queue, &aws_msg, portMAX_DELAY);
+        xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_DATA_READY);
+    } else {
+        // Can't book the room. Shake head
+        struct led_control_request led_msg;
+        led_msg.type = LED_CONTROL_SEQUENCE_REQUEST;
+        led_msg.sequence_request_data = led_sequence_shakes_head();
+        QueueHandle_t led_ctrl_queue = p_app_state->led_control_queue;
+        xQueueSend(led_ctrl_queue, &led_msg, portMAX_DELAY);
+    }
+}
+
+void handle_updated_events(struct app_state * const p_app_state, struct calendar_events_data * const p_events) {
+    struct led_boundaries led_time_chunks;
+    time_t current_time = time_utils_get_current_time();
+    cal_util_get_led_boundaries(current_time, &led_time_chunks);
+    struct led_statuses led_statuses = cal_util_get_led_statuses(&led_time_chunks, p_events);
     struct led_control_request led_msg;
     led_msg.type = LED_CONTROL_STEADY_STATE_REQUEST;
     for (int i = 0; i < NUM_LEDS; i++) {
         led_msg.steady_state_update_request_data.leds[i] = cal_util_get_color_for_status(led_statuses.leds[i]);
+        // configPRINTF(("LED[%d]: %d\r\n", i, led_msg.steady_state_update_request_data.leds[i]));
     }
-
-    for (int i = 0; i < NUM_LEDS; i++) {
-        configPRINTF(("LED[%d]: %d\r\n", i, led_msg.steady_state_update_request_data.leds[i]));
-    }
-
-    QueueHandle_t led_cntrl_msg_buffer = p_app_state->led_control_queue;
-    xQueueSend(led_cntrl_msg_buffer, &led_msg, portMAX_DELAY);
+    QueueHandle_t led_ctrl_queue = p_app_state->led_control_queue;
+    xQueueSend(led_ctrl_queue, &led_msg, portMAX_DELAY);
 }

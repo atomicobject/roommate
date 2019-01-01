@@ -59,12 +59,11 @@ void control_leds(void * params) {
                 // Update the steady state and the LEDs
                 current_steady_state = msg.steady_state_update_request_data;
                 configPRINTF(("Setting LEDs to new steady state!\r\n"));
-                for (int i = 0; i < NUM_LEDS; i++) {
-                    configPRINTF(("LED[%d]: %d\r\n", i, current_steady_state.leds[i]));
-                }
+                // for (int i = 0; i < NUM_LEDS; i++) {
+                //     configPRINTF(("LED[%d]: %d\r\n", i, current_steady_state.leds[i]));
+                // }
 
                 set_leds_and_delay_ms(current_steady_state, 0);
-                configPRINTF(("Finish setting LEDs!\r\n") );
             break;
 
             case LED_CONTROL_SEQUENCE_REQUEST:

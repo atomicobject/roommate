@@ -94,11 +94,14 @@ void coordinate_events(void * p_params) {
                 if (event_received != pdTRUE) {
                     configPRINTF(("ERROR - Event Received bit was set but no event was received. How happen?\r\n"));
                     continue;
+                } else {
+                    configPRINTF(("Successfully retrieved event!\r\n"));
                 }
 
                 switch (rx_event.type) {
                     case AWS_EVENT_CALENDAR_DATA_RECEIVED:
                     {
+                        configPRINTF(("Calendar event data received!\r\n"));
                         // Update the RTC with the timestamp in the message
                         struct tm t;
                         struct roommate_event clock_update_event = {
@@ -128,9 +131,11 @@ void coordinate_events(void * p_params) {
                     }
                     break;
                     case AWS_EVENT_REQUEST_CALENDAR_DATA:
+                        configPRINTF(("Request Calendar data event received!\r\n"));
                     break;
                     case AWS_EVENT_REQUEST_ROOM_HOLD:
                         {   
+                            configPRINTF(("Room Hold Request event received!\r\n"));
                             const char * topic = "reservation-request";
                             int msg_len = sprintf(outgoing_mqtt_msg_buffer, "{\"start\":%lu,\"finish\":%lu,\"boardId\":\"%s\"}", 
                                 rx_event.room_hold_data.start,
@@ -151,6 +156,8 @@ void coordinate_events(void * p_params) {
                                 pdMS_TO_TICKS(5000));
                         }
                     break;
+                    default:
+                        configPRINTF(("Error: Unknown event received!\r\n"));
                 }
             }
             
@@ -219,7 +226,6 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
 
         jsmntok_t * token = &tokens[5];
         for (int i = 0; i < result.num_events; i++) {
-            configPRINTF(("Unpacking event...\r\n", parse_results));
             // See the object that wraps the event
             configASSERT(token->type == JSMN_OBJECT); 
             token++;
