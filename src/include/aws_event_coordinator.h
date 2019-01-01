@@ -20,10 +20,16 @@ struct calendar_data {
     uint8_t num_events;
 };
 
+struct room_hold_data {
+    time_t start;
+    time_t finish;
+};
+
 struct aws_event {
     enum aws_event_type type;
     union {
         struct calendar_data calendar_data;
+        struct room_hold_data room_hold_data;
     };
 };
 

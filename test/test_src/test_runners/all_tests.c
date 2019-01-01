@@ -2,7 +2,7 @@
 
 static void RunAllTests(void)
 {
-  RUN_TEST_GROUP(CalendarEventProcessing);
+  RUN_TEST_GROUP(CalUtil);
   RUN_TEST_GROUP(LEDLogic);
   RUN_TEST_GROUP(LEDSequence);
 }

@@ -38,15 +38,16 @@ CFLAGS += -Wold-style-definition
 ROOMMATE_SRC_ROOT = ../src
 ROOMMATE_INCLUDES = ${ROOMMATE_SRC_ROOT}/include
 ROOMMATE_SRC_FILES=\
-	${ROOMMATE_SRC_ROOT}/led_sequence.c
+	${ROOMMATE_SRC_ROOT}/led_sequence.c \
+	${ROOMMATE_SRC_ROOT}/cal_util.c
 
 TARGET_BASE1=all_tests
 TARGET1 = $(TARGET_BASE1)$(TARGET_EXTENSION)
 TEST_SRC_FILES=\
   $(UNITY_ROOT)/src/unity.c \
   $(UNITY_ROOT)/extras/fixture/src/unity_fixture.c \
-  ${TEST_SRC}/calendar_event_processing_tests.c \
-  ${TEST_SRC}/test_runners/calendar_event_processing_runner.c \
+  ${TEST_SRC}/cal_util_tests.c \
+  ${TEST_SRC}/test_runners/cal_util_runner.c \
   ${TEST_SRC}/led_logic_tests.c \
   ${TEST_SRC}/test_runners/led_logic_runner.c \
   ${TEST_SRC}/led_sequence_tests.c \
