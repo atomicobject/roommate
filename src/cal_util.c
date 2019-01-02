@@ -28,20 +28,20 @@ struct led_statuses cal_util_get_led_statuses(struct led_boundaries const * cons
         // configPRINTF(("Checking LED chunk %d to %d...\r\n", p_this_led->start, p_this_led->end ));
 
         for (uint32_t event_index = 0; event_index < p_events->num_events; event_index++) {
-            struct time_range this_event = p_events->events[event_index];
+            struct roommate_calendar_event this_event = p_events->events[event_index];
             // configPRINTF(("  Checking event %d to %d...\r\n", this_event.start, this_event.end ));
-            if (this_event.start > this_led.end) {
+            if (this_event.time_range.start > this_led.end) {
                 // configPRINTF(("    Event start (%d) is greater than LEDs end (%d)!\r\n", this_event.start, p_this_led->end ));
                 // This event is too far in the future. No event coincides with this LED.
                 break;
             }
-            if (this_event.end - 1 < this_led.start) {  // -1 from event end because google calendar events overlap
+            if (this_event.time_range.end - 1 < this_led.start) {  // -1 from event end because google calendar events overlap
                 // This event happened before this LEDs time window. Check the next event.
                 // configPRINTF(("    Event end (%d) is before LEDs start (%d)!\r\n", this_event.end, p_this_led->start ));
                 continue; 
             }
             // The event must fall within this LEDs time window
-            if (led == 0) {
+            if (led == 0 || this_event.roommate_event) {
                 first_event_is_ongoing = true;
                 result.leds[led] = LED_STATUS_CURRENT_MEETING;
             } else if (first_event_is_ongoing && event_index == 0) {

@@ -11,8 +11,13 @@ struct time_range {
     time_t end;
 };
 
+struct roommate_calendar_event {
+    struct time_range time_range;
+    bool roommate_event;
+};
+
 struct calendar_events_data {
-    struct time_range events[MAX_CALENDAR_EVENTS_PER_MESSAGE];
+    struct roommate_calendar_event events[MAX_CALENDAR_EVENTS_PER_MESSAGE];
     uint32_t num_events;
 };
 

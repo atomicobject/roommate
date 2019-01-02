@@ -117,10 +117,12 @@ void coordinate_events(void * p_params) {
                         };
                         for (int i = 0; i < rx_event.calendar_data.num_events; i++) {
                             strptime(rx_event.calendar_data.events[i].start_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
-                            msg_data.events[i].start = mktime(&t);
+                            msg_data.events[i].time_range.start = mktime(&t);
 
                             strptime(rx_event.calendar_data.events[i].end_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
-                            msg_data.events[i].end = mktime(&t);
+                            msg_data.events[i].time_range.end = mktime(&t);
+
+                            msg_data.events[i].roommate_event = rx_event.calendar_data.events[i].roommate_event;
                         }
                         struct roommate_event calendar_event = {
                              .type = ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS,
