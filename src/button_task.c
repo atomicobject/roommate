@@ -14,6 +14,7 @@
 #include "app_state.h"
 #include "roommate.h"
 
+#define BUTTON_TASK_STACK_SIZE ( 1700 )
 
 static xQueueHandle gpio_evt_queue = NULL;
 
@@ -86,7 +87,7 @@ void button_task_begin_handling_presses(struct app_state * const p_app_state) {
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(struct buttonEvent));
     //start gpio task
-    xTaskCreate(button_task, "ButtonTask", 512*3, p_app_state, 10, NULL);
+    xTaskCreate(button_task, "ButtonTask", BUTTON_TASK_STACK_SIZE, p_app_state, 10, NULL);
 
     //install gpio isr service
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);

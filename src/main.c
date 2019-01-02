@@ -180,7 +180,7 @@ int app_main( void )
         app_state.aws_event_coordinator_queue = aws_event_coordinator_start_coordinating(&app_state);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
-        // experiments_task_start(&app_state);
+        experiments_task_start(&app_state);
 
         /* Run all demos. */
         // DEMO_RUNNER_RunDemos();
@@ -383,11 +383,18 @@ void vApplicationMallocFailedHook()
 void vApplicationStackOverflowHook( TaskHandle_t xTask,
                                     char * pcTaskName )
 {
-    /* Loop forever */
-    for( ; ; )
-    {
         configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
-    }
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+    // /* Loop forever */
+    // for( ; ; )
+    // {
+    //     configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+    // }
 }
 /*-----------------------------------------------------------*/
 extern void esp_vApplicationTickHook();

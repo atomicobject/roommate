@@ -13,7 +13,7 @@
 #include "calendar_event.h"
 #include "jsmn.h"
 
-#define AWS_EVENT_COORDINATOR_STACK_SIZE ( 2304 )
+#define AWS_EVENT_COORDINATOR_STACK_SIZE ( 3000 )
 #define AWS_EVENT_COORDINATOR_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define AWS_EVENT_COORDINATOR_CAPACITY ((size_t)3) // TODO: Think about how many we actually need here...
 

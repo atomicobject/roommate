@@ -8,7 +8,7 @@
 #include "led_sequence.h"
 
 #define ROOMMATE_BUFFER_CAPACITY 2
-#define ROOMMATE_TASK_STACK_SIZE 2048
+#define ROOMMATE_TASK_STACK_SIZE 2200
 #define ROOMMATE_TASK_PRIORITY   1
 
 void roommate_task(void * p_context);
