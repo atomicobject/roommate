@@ -196,7 +196,8 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
     // Initialize jasmine parse
     jsmn_parser parser;
     jsmn_init(&parser);
-    const uint8_t num_tokens = 5 + (MAX_CALENDAR_EVENTS_PER_MESSAGE * 5); // 5 because (outer object + 4 strings)
+    const uint8_t tokens_per_event = 7;
+    const uint8_t num_tokens = 5 + (MAX_CALENDAR_EVENTS_PER_MESSAGE * tokens_per_event); // 5 because (outer object + 4 strings)
     jsmntok_t tokens[num_tokens];
 
     // Execute the parse
@@ -205,8 +206,8 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
 
     if (parse_results > 0) {
         // Sanity check on the number of tokens received determine the number of events
-        configASSERT((parse_results - 5) % 5 == 0);
-        result.num_events = (parse_results - 5) / 5;
+        configASSERT((parse_results - 5) % tokens_per_event == 0);
+        result.num_events = (parse_results - 5) / tokens_per_event;
 
         // See the root object
         configASSERT(tokens[0].type == JSMN_OBJECT); 
@@ -222,7 +223,7 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
         configASSERT(memcmp("events", &data[tokens[3].start], TOKEN_LENGTH(tokens[3])) == 0)
         // See the events array
         configASSERT(tokens[4].type == JSMN_ARRAY);
-        // The rest of the tokens should be events each event should be 5 tokens (outer object + 4 strings)
+        // The rest of the tokens should be events each event should be 5 tokens (outer object + 3 key/value pairs)
 
         jsmntok_t * token = &tokens[5];
         for (int i = 0; i < result.num_events; i++) {
@@ -246,6 +247,15 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
             configASSERT(token->type == JSMN_STRING); 
             configASSERT(TOKEN_PTR_LENGTH(token) == sizeof(timestamp_t)); 
             memcpy(result.events[i].end_time.bytes, &data[token->start], sizeof(timestamp_t));
+            token++;
+            // See the roommate-event key
+            configASSERT(token->type == JSMN_STRING);
+            configASSERT(memcmp("r", &data[token->start], TOKEN_PTR_LENGTH(token)) == 0)
+            token++;
+            // Extract the roommate-event flag
+            configASSERT(token->type == JSMN_PRIMITIVE);
+            configASSERT(TOKEN_PTR_LENGTH(token) == 4 || TOKEN_PTR_LENGTH(token) == 5); // Either "true" or  "false"
+            result.events[i].roommate_event = data[token->start] == 't';
             token++;
         }
     } else {
