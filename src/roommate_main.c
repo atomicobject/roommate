@@ -9,28 +9,30 @@
 #include "led_sequence.h"
 
 #include "queue.h"
-
+#include "aws_wifi.h"
 #include "esp_wifi.h" // Needed for definition of ESP_IF_WIFI_STA 
+#include "esp_interface.h" 
 
+#include <stdbool.h>
 void start_connecting_to_wifi_animation(struct app_state const * const p_app_state);
 
 struct app_state app_state;
 
-void roommate_app_begin(void) {
+void roommate_app_begin(void_func connect_wifi, void_func setup_key_provisioning) {
     app_state.led_control_queue = led_control_start_controlling_leds(&app_state);
     start_connecting_to_wifi_animation(&app_state);
 
     app_state.roommate_event_queue = roommate_begin(&app_state);
 
     /* Connect to the wifi before running the demos */
-    prvWifiConnect();
+    connect_wifi();
 
     esp_wifi_get_mac(ESP_IF_WIFI_STA, app_state.mac_address.mac);
 
     /* A simple example to demonstrate key and certificate provisioning in
     * microcontroller flash using PKCS#11 interface. This should be replaced
     * by production ready key provisioning mechanism. */
-    vDevModeKeyProvisioning();
+    setup_key_provisioning();
 
     button_task_begin_handling_presses(&app_state);
 
@@ -41,7 +43,7 @@ void roommate_app_begin(void) {
     experiments_task_start(&app_state);
 }
 
-void should_continue_wifi_animation() {
+bool should_continue_wifi_animation(struct app_state const * const p_app_state) {
     return WIFI_IsConnected() == pdFALSE;
 }
 

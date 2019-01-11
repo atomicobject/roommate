@@ -29,7 +29,7 @@ QueueHandle_t led_control_start_controlling_leds(struct app_state const * const 
     ( void ) xTaskCreate( control_leds,                /* The function that implements the demo task. */
                           "LEDControlTask",           /* The name to assign to the task being created. */
                           LED_CONTROL_STACK_SIZE,     /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
-                          p_app_state,          /* The task parameter is not being used. */
+                          (void * const)p_app_state,          /* The task parameter is not being used. */
                           LED_CONTROL_TASK_PRIORITY,  /* The priority at which the task being created will run. */
                           NULL );                     /* Not storing the task's handle. */
 

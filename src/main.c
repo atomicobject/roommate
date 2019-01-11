@@ -153,7 +153,7 @@ int app_main( void )
 
     if( SYSTEM_Init() == pdPASS )
     {
-        roommate_app_begin();
+        roommate_app_begin(prvWifiConnect, vDevModeKeyProvisioning);
 
         /* Run all demos. */
         // DEMO_RUNNER_RunDemos();
