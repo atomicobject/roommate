@@ -2,6 +2,7 @@
 #define LED_UTILS_H
 #include <stdint.h>
 #include <stdbool.h>
+#include "app_state.h"
 
 #define NUM_LEDS 8
 
@@ -17,10 +18,13 @@ struct led_frame {
 
 // typedef void (*led_sequence_state_init_func)(struct led_sequence_state * p_state);
 typedef struct led_frame (*led_sequence_executor_func)(uint32_t frame_num, uint32_t elapsed_time_ms);
+typedef bool (*continue_sequence_func)(struct app_state const * const p_app_state);
 
 struct led_sequence {
     led_sequence_executor_func executor;       // Called in a loop to get the next LED state (frame) until return value is null
     // led_sequence_state_init_func initializer;  // Called to get initial state for sequence 
+    continue_sequence_func should_continue;
+
     uint32_t max_frames;
 };
 

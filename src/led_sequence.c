@@ -42,7 +42,7 @@ struct led_sequence led_sequence_shakes_head(void) {
     };
 }
 
-struct led_frame newtons_cradle(uint32_t frame_num, uint32_t elapsed_time_ms) {
+struct led_frame newtons_cradle(uint32_t frame_num, uint32_t elapsed_time_ms, uint32_t color) {
     (void)elapsed_time_ms;
     struct led_frame frame;
     memset(&frame.new_state.leds, 0, sizeof(struct led_state));
@@ -58,9 +58,26 @@ struct led_frame newtons_cradle(uint32_t frame_num, uint32_t elapsed_time_ms) {
     return frame;
 }
 
-struct led_sequence led_sequence_newtons_cradle(void) {
+struct led_frame newtons_cradle_blue(uint32_t frame_num, uint32_t elapsed_time_ms) {
+    return newtons_cradle(frame_num, elapsed_time_ms, BLUE);
+}
+
+struct led_sequence led_sequence_newtons_cradle_blue(continue_sequence_func should_continue_func) {
     return (struct led_sequence) {
-        .executor = &newtons_cradle,
+        .executor = &newtons_cradle_blue,
         .max_frames = 200, // Higher than needed (incase we adjust the sequence)
+        .should_continue = should_continue_func
+    };
+}
+
+struct led_frame newtons_cradle_green(uint32_t frame_num, uint32_t elapsed_time_ms) {
+    return newtons_cradle(frame_num, elapsed_time_ms, GREEN);
+}
+
+struct led_sequence led_sequence_newtons_cradle_green(continue_sequence_func should_continue_func) {
+    return (struct led_sequence) {
+        .executor = &newtons_cradle_green,
+        .max_frames = 200, // Higher than needed (incase we adjust the sequence)
+        .should_continue = should_continue_func
     };
 }

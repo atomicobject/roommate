@@ -40,7 +40,7 @@ void experiments_task_run( void * pvParameters ) {
 
   struct led_control_request msg = {
     .type = LED_CONTROL_SEQUENCE_REQUEST,
-    .sequence_request_data = led_sequence_newtons_cradle(),
+    .sequence_request_data = led_sequence_newtons_cradle_green(NULL),
   };
   (void)msg;
 
