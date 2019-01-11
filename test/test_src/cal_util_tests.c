@@ -15,7 +15,7 @@ TEST(CalUtil, cal_util_get_led_statuses_indicates_current_meeting_for_first_led)
   struct led_boundaries boundaries = { };
   setup_led_boundaries(&boundaries, 100, 100);
   struct calendar_events_data events = { .num_events = 1 };
-  events.events[0] = (struct time_range){
+  events.events[0].time_range = (struct time_range){
     .start = 100,
     .end = 200,
   };
@@ -35,7 +35,7 @@ TEST(CalUtil, cal_util_get_led_statuses_indicates_current_meeting_for_first_two_
   struct led_boundaries boundaries = { };
   setup_led_boundaries(&boundaries, 100, 100);
   struct calendar_events_data events = { .num_events = 1 };
-  events.events[0] = (struct time_range){
+  events.events[0].time_range = (struct time_range){
     .start = 100,
     .end = 300,
   };
@@ -55,7 +55,7 @@ TEST(CalUtil, cal_util_get_led_statuses_indicates_current_meeting_for_all_leds)
   struct led_boundaries boundaries = { };
   setup_led_boundaries(&boundaries, 100, 100);
   struct calendar_events_data events = { .num_events = 1 };
-  events.events[0] = (struct time_range){
+  events.events[0].time_range = (struct time_range){
     .start = 100,
     .end = 800,
   };
@@ -75,17 +75,17 @@ TEST(CalUtil, cal_util_get_led_statuses_indicates_future_meeting_for_meetings_af
   struct led_boundaries boundaries = { };
   setup_led_boundaries(&boundaries, 100, 100);
   struct calendar_events_data events = { .num_events = 3 };
-  events.events[0] = (struct time_range){
+  events.events[0].time_range = (struct time_range){
     .start = 100,
     .end = 200,
   };
 
-  events.events[1] = (struct time_range){
+  events.events[1].time_range = (struct time_range){
     .start = 300,
     .end = 400,
   };
 
-  events.events[2] = (struct time_range){
+  events.events[2].time_range = (struct time_range){
     .start = 500,
     .end = 600,
   };
