@@ -9,6 +9,7 @@ typedef struct timestamp {
 struct calendar_event {
     timestamp_t start_time;
     timestamp_t end_time;
+    bool roommate_event;
 };
 
 #endif

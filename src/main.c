@@ -161,8 +161,8 @@ int app_main( void )
 
     if( SYSTEM_Init() == pdPASS )
     {
-        app_state.roommate_queue = roommate_begin(&app_state);
-        app_state.led_control_msg_buffer = led_control_start_controlling_leds();
+        app_state.roommate_event_queue = roommate_begin(&app_state);
+        app_state.led_control_queue = led_control_start_controlling_leds();
 
         /* Connect to the wifi before running the demos */
         prvWifiConnect();
@@ -174,10 +174,10 @@ int app_main( void )
         * by production ready key provisioning mechanism. */
         vDevModeKeyProvisioning();
 
-        beginHandlingButtonPresses();
+        button_task_begin_handling_presses(&app_state);
 
         mqtt_agent_manager_begin(&app_state);
-        app_state.aws_event_coordinator_buffer = aws_event_coordinator_start_coordinating(&app_state);
+        app_state.aws_event_coordinator_queue = aws_event_coordinator_start_coordinating(&app_state);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
         experiments_task_start(&app_state);
@@ -250,6 +250,7 @@ void prvWifiConnect( void )
     else
     {
         configPRINTF( ( "WiFi failed to connect to AP.\r\n" ) );
+        assert(false);
 
         portDISABLE_INTERRUPTS();
         while( 1 )
@@ -382,11 +383,18 @@ void vApplicationMallocFailedHook()
 void vApplicationStackOverflowHook( TaskHandle_t xTask,
                                     char * pcTaskName )
 {
-    /* Loop forever */
-    for( ; ; )
-    {
         configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
-    }
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+        configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+    // /* Loop forever */
+    // for( ; ; )
+    // {
+    //     configPRINTF( ( "ERROR: stack overflow with task %s\r\n", pcTaskName ) );
+    // }
 }
 /*-----------------------------------------------------------*/
 extern void esp_vApplicationTickHook();

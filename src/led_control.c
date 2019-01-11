@@ -6,8 +6,6 @@
 // FreeRTOS Includes
 #include "FreeRTOS.h"
 #include "task.h"
-#include "message_buffer.h"
-#include "task.h"
 
 // App Includes
 #include "led_control.h"
@@ -22,36 +20,35 @@ const TickType_t FIFTY_MICROSECONDS = pdMS_TO_TICKS(10) / 20;
 void control_leds(void * params);
 void set_leds_and_delay_ms(struct led_state new_state, uint32_t delay_ms);
 
-MessageBufferHandle_t led_control_start_controlling_leds(void) {
+QueueHandle_t led_control_start_controlling_leds(void) {
     led_control_hw_init();
 
-    MessageBufferHandle_t msg_buffer_handle = xMessageBufferCreate( (sizeof(struct led_control_request) + sizeof(size_t)) * LED_CONTROL_BUFFER_CAPACITY );
-    configASSERT( msg_buffer_handle != NULL );
+    QueueHandle_t queue_handle = xQueueCreate(LED_CONTROL_BUFFER_CAPACITY, sizeof(struct led_control_request));
+    configASSERT( queue_handle != NULL );
 
     ( void ) xTaskCreate( control_leds,                /* The function that implements the demo task. */
                           "LEDControlTask",           /* The name to assign to the task being created. */
                           LED_CONTROL_STACK_SIZE,     /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
-                          msg_buffer_handle,          /* The task parameter is not being used. */
+                          queue_handle,          /* The task parameter is not being used. */
                           LED_CONTROL_TASK_PRIORITY,  /* The priority at which the task being created will run. */
                           NULL );                     /* Not storing the task's handle. */
 
-    return msg_buffer_handle;
+    return queue_handle;
 }
 
 void control_leds(void * params) {
-    MessageBufferHandle_t msg_buffer_handle = params;
+    QueueHandle_t queue_handle = params;
     struct led_control_request msg;
     struct led_state current_steady_state = LED_STATE_ALL_OFF();
 
     for(;;) {
-        memset( &msg, 0x00, sizeof( struct led_control_request ) );
-        size_t bytes_received = xMessageBufferReceive( msg_buffer_handle,
-                                                &msg,
-                                                sizeof( struct led_control_request ),
-                                                portMAX_DELAY );
+        memset(&msg, 0x00, sizeof(struct led_control_request));
+        BaseType_t success = xQueueReceive(queue_handle,
+                                           &msg,
+                                           portMAX_DELAY);
 
-        if (bytes_received != sizeof(struct led_control_request)) {
-            configPRINTF( ( "ERROR:  Unexpected message length received: Expected: %d Got: %d\r\n", sizeof(struct led_control_request), bytes_received ) );
+        if (success != pdTRUE) {
+            configPRINTF(( "ERROR: Tried to dequeue led_control messasge but failed"));
             continue;
         } else {
             configPRINTF(("Received LED Control message!\r\n") );
@@ -62,12 +59,11 @@ void control_leds(void * params) {
                 // Update the steady state and the LEDs
                 current_steady_state = msg.steady_state_update_request_data;
                 configPRINTF(("Setting LEDs to new steady state!\r\n"));
-                for (int i = 0; i < NUM_LEDS; i++) {
-                    configPRINTF(("LED[%d]: %d\r\n", i, current_steady_state.leds[i]));
-                }
+                // for (int i = 0; i < NUM_LEDS; i++) {
+                //     configPRINTF(("LED[%d]: %d\r\n", i, current_steady_state.leds[i]));
+                // }
 
                 set_leds_and_delay_ms(current_steady_state, 0);
-                configPRINTF(("Finish setting LEDs!\r\n") );
             break;
 
             case LED_CONTROL_SEQUENCE_REQUEST:

@@ -1,6 +1,5 @@
 #include "FreeRTOS.h"
 #include "task.h"
-#include "message_buffer.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -14,18 +13,20 @@
 #include "calendar_event.h"
 #include "jsmn.h"
 
-#define AWS_EVENT_COORDINATOR_STACK_SIZE ( 2304 )
+#define AWS_EVENT_COORDINATOR_STACK_SIZE ( 3000 )
 #define AWS_EVENT_COORDINATOR_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define AWS_EVENT_COORDINATOR_CAPACITY ((size_t)3) // TODO: Think about how many we actually need here...
 
 #define MQTT_SUBSCRIBE_TIMEOUT                   pdMS_TO_TICKS( 300 )
 
+char outgoing_mqtt_msg_buffer[128];
+
 void coordinate_events(void * p_params);
 static MQTTBool_t handle_received_event_for_subscription( void * p_context, const MQTTPublishData_t * const p_publish_parameters );
 
-MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state * const p_app_state) {
-    MessageBufferHandle_t msg_buffer_handle = xMessageBufferCreate( (sizeof(struct aws_event) + sizeof(size_t)) * AWS_EVENT_COORDINATOR_CAPACITY);
-    configASSERT( msg_buffer_handle != NULL );
+QueueHandle_t aws_event_coordinator_start_coordinating(struct app_state * const p_app_state) {
+    QueueHandle_t queue_handle = xQueueCreate(AWS_EVENT_COORDINATOR_CAPACITY, sizeof(struct aws_event));
+    configASSERT( queue_handle != NULL );
 
     ( void ) xTaskCreate( coordinate_events,                    /* The function that implements the demo task. */
                           "AWS Event Coord",                    /* The name to assign to the task being created. */
@@ -34,7 +35,7 @@ MessageBufferHandle_t aws_event_coordinator_start_coordinating(struct app_state 
                           AWS_EVENT_COORDINATOR_TASK_PRIORITY,  /* The priority at which the task being created will run. */
                           NULL );                               /* Not storing the task's handle. */
 
-    return msg_buffer_handle;
+    return queue_handle;
 }
 
 
@@ -82,18 +83,25 @@ void coordinate_events(void * p_params) {
             configPRINTF(("Event Coordinator waiting for agent disconencted or data ready\r\n"));
             EventBits_t bitsSet = xEventGroupWaitBits( p_app_state->mqtt_agent_event_group, //const EventGroupHandle_t xEventGroup, 
                                                     MQTT_EVENT_AGENT_DISCONNECTED | 
-                                                    MQTT_EVENT_RX_DATA_READY, //const EventBits_t uxBitsToWaitFor, 
+                                                    MQTT_EVENT_DATA_READY, //const EventBits_t uxBitsToWaitFor, 
                                                     pdTRUE, // const BaseType_t xClearOnExit, 
                                                     pdFALSE, //const BaseType_t xWaitForAllBits, 
                                                     portMAX_DELAY); //TickType_t xTicksToWait )
-            if (bitsSet & MQTT_EVENT_RX_DATA_READY) {
-                configPRINTF(("Event Coordinator got an event. Get it out of the buffer...\r\n"));
+            if (bitsSet & MQTT_EVENT_DATA_READY) {
+                configPRINTF(("Event Coordinator got an event. Get it out of the queue...\r\n"));
                 struct aws_event rx_event;
-                size_t received_bytes = xMessageBufferReceive(p_app_state->aws_event_coordinator_buffer, &rx_event, sizeof(struct aws_event), 100);
+                BaseType_t event_received = xQueueReceive(p_app_state->aws_event_coordinator_queue, &rx_event, 100);
+                if (event_received != pdTRUE) {
+                    configPRINTF(("ERROR - Event Received bit was set but no event was received. How happen?\r\n"));
+                    continue;
+                } else {
+                    configPRINTF(("Successfully retrieved event!\r\n"));
+                }
 
                 switch (rx_event.type) {
                     case AWS_EVENT_CALENDAR_DATA_RECEIVED:
                     {
+                        configPRINTF(("Calendar event data received!\r\n"));
                         // Update the RTC with the timestamp in the message
                         struct tm t;
                         struct roommate_event clock_update_event = {
@@ -101,7 +109,7 @@ void coordinate_events(void * p_params) {
                         };
                         strptime(rx_event.calendar_data.current_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
                         clock_update_event.set_clock_data.time = mktime(&t);
-                        xQueueSend(p_app_state->roommate_queue, &clock_update_event, portMAX_DELAY);
+                        xQueueSend(p_app_state->roommate_event_queue, &clock_update_event, portMAX_DELAY);
 
                         // Extract the events from the message
                         struct calendar_events_data msg_data = {
@@ -109,23 +117,49 @@ void coordinate_events(void * p_params) {
                         };
                         for (int i = 0; i < rx_event.calendar_data.num_events; i++) {
                             strptime(rx_event.calendar_data.events[i].start_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
-                            msg_data.events[i].start = mktime(&t);
+                            msg_data.events[i].time_range.start = mktime(&t);
 
                             strptime(rx_event.calendar_data.events[i].end_time.bytes, "%Y-%m-%dT%H:%M:%SZ", &t);
-                            msg_data.events[i].end = mktime(&t);
+                            msg_data.events[i].time_range.end = mktime(&t);
+
+                            msg_data.events[i].roommate_event = rx_event.calendar_data.events[i].roommate_event;
                         }
                         struct roommate_event calendar_event = {
                              .type = ROOMMATE_EVENT_UPDATE_CALENDAR_EVENTS,
                              .calendar_events_data = msg_data,
                         };
-                        xQueueSend(p_app_state->roommate_queue, &calendar_event, portMAX_DELAY);
+                        xQueueSend(p_app_state->roommate_event_queue, &calendar_event, portMAX_DELAY);
 
                     }
                     break;
                     case AWS_EVENT_REQUEST_CALENDAR_DATA:
+                        configPRINTF(("Request Calendar data event received!\r\n"));
                     break;
                     case AWS_EVENT_REQUEST_ROOM_HOLD:
+                        {   
+                            configPRINTF(("Room Hold Request event received!\r\n"));
+                            const char * topic = "reservation-request";
+                            int msg_len = sprintf(outgoing_mqtt_msg_buffer, "{\"start\":%lu,\"finish\":%lu,\"boardId\":\"%s\"}", 
+                                rx_event.room_hold_data.start,
+                                rx_event.room_hold_data.finish,
+                                clientId);
+
+                            MQTTAgentPublishParams_t const publish_params = {
+                                .pucTopic = (uint8_t *)topic, /**< The topic string on which the message should be published. */
+                                .usTopicLength = strlen(topic),   /**< The length of the topic. */
+                                .xQoS = eMQTTQoS1,           /**< Quality of Service (QoS). */
+                                .pvData = outgoing_mqtt_msg_buffer,      /**< The data to publish. This data is copied into the MQTT buffers and therefore the user can free the buffer after the MQTT_AGENT_Publish call returns. */
+                                .ulDataLength = msg_len,    /**< Length of the data. */
+                            };
+                            configPRINTF(("Attempting to publish MQTT msg to reserve room\r\n"));
+                            MQTTAgentReturnCode_t publish_result = MQTT_AGENT_Publish(
+                                p_app_state->mqtt_agent_handle,
+                                &publish_params, 
+                                pdMS_TO_TICKS(5000));
+                        }
                     break;
+                    default:
+                        configPRINTF(("Error: Unknown event received!\r\n"));
                 }
             }
             
@@ -164,7 +198,8 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
     // Initialize jasmine parse
     jsmn_parser parser;
     jsmn_init(&parser);
-    const uint8_t num_tokens = 5 + (MAX_CALENDAR_EVENTS_PER_MESSAGE * 5); // 5 because (outer object + 4 strings)
+    const uint8_t tokens_per_event = 7;
+    const uint8_t num_tokens = 5 + (MAX_CALENDAR_EVENTS_PER_MESSAGE * tokens_per_event); // 5 because (outer object + 4 strings)
     jsmntok_t tokens[num_tokens];
 
     // Execute the parse
@@ -173,8 +208,8 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
 
     if (parse_results > 0) {
         // Sanity check on the number of tokens received determine the number of events
-        configASSERT((parse_results - 5) % 5 == 0);
-        result.num_events = (parse_results - 5) / 5;
+        configASSERT((parse_results - 5) % tokens_per_event == 0);
+        result.num_events = (parse_results - 5) / tokens_per_event;
 
         // See the root object
         configASSERT(tokens[0].type == JSMN_OBJECT); 
@@ -190,11 +225,10 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
         configASSERT(memcmp("events", &data[tokens[3].start], TOKEN_LENGTH(tokens[3])) == 0)
         // See the events array
         configASSERT(tokens[4].type == JSMN_ARRAY);
-        // The rest of the tokens should be events each event should be 5 tokens (outer object + 4 strings)
+        // The rest of the tokens should be events each event should be 5 tokens (outer object + 3 key/value pairs)
 
         jsmntok_t * token = &tokens[5];
         for (int i = 0; i < result.num_events; i++) {
-            configPRINTF(("Unpacking event...\r\n", parse_results));
             // See the object that wraps the event
             configASSERT(token->type == JSMN_OBJECT); 
             token++;
@@ -215,6 +249,15 @@ struct calendar_data extract_calendar_data(const char * data, size_t length) {
             configASSERT(token->type == JSMN_STRING); 
             configASSERT(TOKEN_PTR_LENGTH(token) == sizeof(timestamp_t)); 
             memcpy(result.events[i].end_time.bytes, &data[token->start], sizeof(timestamp_t));
+            token++;
+            // See the roommate-event key
+            configASSERT(token->type == JSMN_STRING);
+            configASSERT(memcmp("r", &data[token->start], TOKEN_PTR_LENGTH(token)) == 0)
+            token++;
+            // Extract the roommate-event flag
+            configASSERT(token->type == JSMN_PRIMITIVE);
+            configASSERT(TOKEN_PTR_LENGTH(token) == 4 || TOKEN_PTR_LENGTH(token) == 5); // Either "true" or  "false"
+            result.events[i].roommate_event = data[token->start] == 't';
             token++;
         }
     } else {
@@ -239,8 +282,8 @@ static MQTTBool_t handle_received_event_for_subscription( void * p_context,
         .calendar_data = extracted_calendar_data,
     };
 
-    xMessageBufferSend(p_app_state->aws_event_coordinator_buffer, &event, sizeof(struct aws_event), portMAX_DELAY);
-    xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_RX_DATA_READY);
+    xQueueSend(p_app_state->aws_event_coordinator_queue, &event, portMAX_DELAY);
+    xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_DATA_READY);
 
     /* The data was copied into the FreeRTOS message buffer, so the buffer
      * containing the data is no longer required.  Returning eMQTTFalse tells the
