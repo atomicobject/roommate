@@ -13,18 +13,20 @@
 #include "led_utils.h"
 
 #define LED_CONTROL_STACK_SIZE ( 2048 )
-#define LED_CONTROL_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
+#define LED_CONTROL_TASK_PRIORITY ( configMAX_PRIORITIES - 1 ) // Highest possible priority
 #define LED_CONTROL_BUFFER_CAPACITY ((size_t)2)
 const TickType_t FIFTY_MICROSECONDS = pdMS_TO_TICKS(10) / 20;
 
 void control_leds(void * params);
 void set_leds_and_delay_ms(struct led_state new_state, uint32_t delay_ms);
 
-QueueHandle_t led_control_start_controlling_leds(struct app_state const * const p_app_state) {
+QueueHandle_t led_control_start_controlling_leds(struct app_state * const p_app_state) {
     led_control_hw_init();
 
     QueueHandle_t queue_handle = xQueueCreate(LED_CONTROL_BUFFER_CAPACITY, sizeof(struct led_control_request));
     configASSERT( queue_handle != NULL );
+
+    p_app_state->led_control_queue = queue_handle; // This must be set here. Otherwise task starts up with a NULL queue pointer.
 
     ( void ) xTaskCreate( control_leds,                /* The function that implements the demo task. */
                           "LEDControlTask",           /* The name to assign to the task being created. */

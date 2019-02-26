@@ -18,6 +18,6 @@ struct led_control_request {
     };
 };
 
-QueueHandle_t led_control_start_controlling_leds(struct app_state const * const p_app_state);
+QueueHandle_t led_control_start_controlling_leds(struct app_state * const p_app_state);
 
 #endif
