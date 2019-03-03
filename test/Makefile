@@ -53,7 +53,7 @@ TEST_SRC_FILES=\
   ${TEST_SRC}/led_sequence_tests.c \
   ${TEST_SRC}/test_runners/led_sequence_runner.c \
   ${TEST_SRC}/test_runners/all_tests.c
-INC_DIRS=-I${ROOMMATE_INCLUDES} -I$(UNITY_ROOT)/src -I$(UNITY_ROOT)/extras/fixture/src
+INC_DIRS=-I${TEST_SRC}/../fake_headers -I${ROOMMATE_INCLUDES} -I$(UNITY_ROOT)/src -I$(UNITY_ROOT)/extras/fixture/src
 SYMBOLS=
 
 all: clean default
