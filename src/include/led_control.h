@@ -3,6 +3,7 @@
 #include "led_control_hw.h"
 #include <stdint.h>
 #include "queue.h"
+#include "app_state.h"
 
 enum led_control_request_type { 
     LED_CONTROL_SEQUENCE_REQUEST, 
@@ -17,6 +18,6 @@ struct led_control_request {
     };
 };
 
-QueueHandle_t led_control_start_controlling_leds(void);
+QueueHandle_t led_control_start_controlling_leds(struct app_state * const p_app_state);
 
 #endif

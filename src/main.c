@@ -31,13 +31,7 @@
 #include "aws_demo_runner.h"
 
 /* AO Conf Proj includes */
-#include "led_control.h"
-#include "app_state.h"
-#include "experiments_task.h"
-#include "button_task.h"
-#include "mqtt_agent_manager.h"
-#include "aws_event_coordinator.h"
-#include "roommate.h"
+#include "roommate_main.h"
 
 #include "aws_dev_mode_key_provisioning.h"
 
@@ -60,7 +54,7 @@
 /* Logging Task Defines. */
 #define mainLOGGING_MESSAGE_QUEUE_LENGTH    ( 32 )
 #define mainLOGGING_TASK_STACK_SIZE         ( configMINIMAL_STACK_SIZE * 6 )
-#define mainDEVICE_NICK_NAME                "Espressif_Demo"
+#define mainDEVICE_NICK_NAME                "Roommate!"
 
 /* Declare the firmware version structure for all to see. */
 const AppVersion32_t xAppFirmwareVersion = {
@@ -139,8 +133,6 @@ static void prvWifiConnect( void );
 static void prvMiscInitialization( void );
 /*-----------------------------------------------------------*/
 
-struct app_state app_state;
-
 /**
  * @brief Application runtime entry point.
  */
@@ -161,26 +153,7 @@ int app_main( void )
 
     if( SYSTEM_Init() == pdPASS )
     {
-        app_state.roommate_event_queue = roommate_begin(&app_state);
-        app_state.led_control_queue = led_control_start_controlling_leds();
-
-        /* Connect to the wifi before running the demos */
-        prvWifiConnect();
-
-        esp_wifi_get_mac(ESP_IF_WIFI_STA, app_state.mac_address.mac);
-
-        /* A simple example to demonstrate key and certificate provisioning in
-        * microcontroller flash using PKCS#11 interface. This should be replaced
-        * by production ready key provisioning mechanism. */
-        vDevModeKeyProvisioning();
-
-        button_task_begin_handling_presses(&app_state);
-
-        mqtt_agent_manager_begin(&app_state);
-        app_state.aws_event_coordinator_queue = aws_event_coordinator_start_coordinating(&app_state);
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        experiments_task_start(&app_state);
+        roommate_app_begin(prvWifiConnect, vDevModeKeyProvisioning);
 
         /* Run all demos. */
         // DEMO_RUNNER_RunDemos();

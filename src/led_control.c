@@ -13,23 +13,25 @@
 #include "led_utils.h"
 
 #define LED_CONTROL_STACK_SIZE ( 2048 )
-#define LED_CONTROL_TASK_PRIORITY ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
+#define LED_CONTROL_TASK_PRIORITY ( configMAX_PRIORITIES - 1 ) // Highest possible priority
 #define LED_CONTROL_BUFFER_CAPACITY ((size_t)2)
 const TickType_t FIFTY_MICROSECONDS = pdMS_TO_TICKS(10) / 20;
 
 void control_leds(void * params);
 void set_leds_and_delay_ms(struct led_state new_state, uint32_t delay_ms);
 
-QueueHandle_t led_control_start_controlling_leds(void) {
+QueueHandle_t led_control_start_controlling_leds(struct app_state * const p_app_state) {
     led_control_hw_init();
 
     QueueHandle_t queue_handle = xQueueCreate(LED_CONTROL_BUFFER_CAPACITY, sizeof(struct led_control_request));
     configASSERT( queue_handle != NULL );
 
+    p_app_state->led_control_queue = queue_handle; // This must be set here. Otherwise task starts up with a NULL queue pointer.
+
     ( void ) xTaskCreate( control_leds,                /* The function that implements the demo task. */
                           "LEDControlTask",           /* The name to assign to the task being created. */
                           LED_CONTROL_STACK_SIZE,     /* The size, in WORDS (not bytes), of the stack to allocate for the task being created. */
-                          queue_handle,          /* The task parameter is not being used. */
+                          (void * const)p_app_state,          /* The task parameter is not being used. */
                           LED_CONTROL_TASK_PRIORITY,  /* The priority at which the task being created will run. */
                           NULL );                     /* Not storing the task's handle. */
 
@@ -37,13 +39,13 @@ QueueHandle_t led_control_start_controlling_leds(void) {
 }
 
 void control_leds(void * params) {
-    QueueHandle_t queue_handle = params;
+    struct app_state * p_app_state = params;
     struct led_control_request msg;
     struct led_state current_steady_state = LED_STATE_ALL_OFF();
 
     for(;;) {
         memset(&msg, 0x00, sizeof(struct led_control_request));
-        BaseType_t success = xQueueReceive(queue_handle,
+        BaseType_t success = xQueueReceive(p_app_state->led_control_queue,
                                            &msg,
                                            portMAX_DELAY);
 
@@ -70,18 +72,26 @@ void control_leds(void * params) {
             {
                 uint32_t frame_num = 0;
                 uint32_t elapsed_time_ms = 0;
-                do  {
-                    struct led_frame new_frame = msg.sequence_request_data.executor(frame_num, elapsed_time_ms);
-                    // Update the LEDs 
-                    set_leds_and_delay_ms(new_frame.new_state, new_frame.duration_ms);
+                for (;;) {
+                    do  {
+                        struct led_frame new_frame = msg.sequence_request_data.executor(frame_num, elapsed_time_ms);
+                        // Update the LEDs 
+                        set_leds_and_delay_ms(new_frame.new_state, new_frame.duration_ms);
 
-                    if (new_frame.is_last_frame) { break; }
+                        if (new_frame.is_last_frame) { break; }
 
-                    // Increment frame and elapsed time
-                    frame_num++;
-                    elapsed_time_ms += new_frame.duration_ms;
+                        // Increment frame and elapsed time
+                        frame_num++;
+                        elapsed_time_ms += new_frame.duration_ms;
 
-                } while (frame_num < msg.sequence_request_data.max_frames);
+                    } while (frame_num < msg.sequence_request_data.max_frames);
+
+                    // Run the sequence again unless should_continue is false
+                    if (msg.sequence_request_data.should_continue == NULL ||
+                        msg.sequence_request_data.should_continue(p_app_state) == false) {
+                            break;
+                        }
+                }
 
                 // Finally, after the sequence is over, return to the steady state
                 set_leds_and_delay_ms(current_steady_state, 0);
