@@ -50,6 +50,7 @@ roommate-help:
 	@echo "make use-board BOARD=foo             - switch to board 'foo'"
 	@echo "make print-BOARD                     - print current board name"
 	@echo "make print-TARGET_BOARD              - print current board config directory"
+	@echo "make monitor-without-reboot          - connect a serial monitor without rebooting the board (quit with CTRL+A, :quit)"
 	@echo "make help                            - display Espressif help"
 
 CURRENT_BOARD_FILE = $(ROOMMATE_BOARDS)/current-board
@@ -95,6 +96,10 @@ save-new-board:
 
 use-board:
 	echo $(BOARD) > $(CURRENT_BOARD_FILE)
+
+# https://esp32.com/viewtopic.php?t=1936
+monitor-without-reboot:
+	screen /dev/cu.SLAB_USBtoUART 115200
 
 # ======== END BOARD STUFF ========
 
