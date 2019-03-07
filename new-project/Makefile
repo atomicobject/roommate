@@ -13,7 +13,13 @@ ifndef IDF_PATH
 export IDF_PATH := $(AMAZON_FREERTOS_PATH)/lib/third_party/mcu_vendor/espressif/esp-idf
 endif
 
-EXTRA_COMPONENT_DIRS := $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code
+#
+# Remove espressif demo's main.c (in the AFR submodule) so it doesn't conflict with ours:
+#
+NO_MAIN:=$(shell [ -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ] && mv -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.bak )
+
+EXTRA_COMPONENT_DIRS := $(CURDIR)/../src \
+$(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code
 
 include $(IDF_PATH)/make/project.mk
 
