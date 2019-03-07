@@ -13,6 +13,22 @@ ifndef IDF_PATH
 export IDF_PATH := $(AMAZON_FREERTOS_PATH)/lib/third_party/mcu_vendor/espressif/esp-idf
 endif
 
+# ======== INITIAL SETUP ========
+
+QUICK_START_FROM_FREERTOS = tools/aws_config_quick_start
+QUICK_START = $(AMAZON_FREERTOS_PATH)/$(QUICK_START_FROM_FREERTOS)
+
+config-aws:
+	@echo "Enter your network credentials in: ../amazon-freertos/$(QUICK_START_FROM_FREERTOS)/configure.json"
+	@echo "Valid network types are:"
+	@echo "eWiFiSecurityOpen"
+	@echo "eWiFiSecurityWEP"
+	@echo "eWiFiSecurityWPA"
+	@echo "eWiFiSecurityWPA2"
+
+setup-aws:
+	cd $(QUICK_START) && python SetupAWS.py setup
+
 # ======== ROOMMATE BOARD STUFF ========
 
 # out-of-repo directory to contain all the board configs.
