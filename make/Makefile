@@ -84,17 +84,10 @@ monitor-without-reboot:
 
 # ======== PATCHING AMAZON_FREERTOS SUBMODULE ========
 
-.PHONY:
-patch-freertos:
-	[ -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ] && mv -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.bak || true
-	cp $(TARGET_BOARD)/aws_clientcredential.h ../amazon-freertos/demos/common/include/
-	cp $(TARGET_BOARD)/aws_clientcredential_keys.h ../amazon-freertos/demos/common/include/
-
 # Remove espressif demo's main.c (in the AFR submodule) so it doesn't conflict with ours:
-# NO_MAIN:=$(shell [ -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ] && mv -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.bak )
+NO_MAIN:=$(shell [ -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ] && mv -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.bak )
 
-# Copy our aws_clientcredential.h and aws_clientcredential_keys.h on top of amazon's
-# HEADER1:=$(shell cp demos/common/include)
+# ======== END PATCHING AMAZON_FREERTOS SUBMODULE ========
 
 EXTRA_COMPONENT_DIRS := $(CURDIR)/../src \
 $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code
