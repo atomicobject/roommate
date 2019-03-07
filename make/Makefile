@@ -55,7 +55,9 @@ CURRENT_BOARD_FILE = $(ROOMMATE_BOARDS)/current-board
 # $(CURRENT_BOARD_FILE)
 BOARD = $(shell cat $(CURRENT_BOARD_FILE))
 
+# this is exported so that it can be consumed by component makefiles:
 export TARGET_BOARD_FROM_ROOT = $(ROOMMATE_BOARDS_FROM_ROOT)/$(BOARD)
+
 TARGET_BOARD = $(ROOMMATE_BOARDS)/$(BOARD)
 
 CLIENTCRED_H_SRC = $(AMAZON_FREERTOS_PATH)/demos/common/include/aws_clientcredential.h
@@ -104,6 +106,9 @@ monitor-without-reboot:
 NO_MAIN:=$(shell [ -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ] && mv -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.bak )
 
 # ======== END PATCHING AMAZON_FREERTOS SUBMODULE ========
+
+
+# ======== PROJECT CONFIG ========
 
 EXTRA_COMPONENT_DIRS := $(CURDIR)/../src \
 $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code
