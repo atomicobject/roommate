@@ -1,9 +1,9 @@
 ## Updating Amazon FreeRTOS
 
-We keep FreeRTOS in a clean submodule with no local changes. We've managed to construct a build environment entirely outside of it, but it required copying a few files, which causes a bit of pain when it's time to integrate changes from upstream.
+We keep FreeRTOS in a clean submodule with no local changes[^1] and minimal duplication of its files in our own repo. 
 
-Notes:
-- Our `config_files` directory is a (modified) copy of `amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/config_files`
-  - To update it, delete our directory, re-copy upstream's, and then use git to carefully restore our changes. (e.g., discard the deletion of our changes)
-- Our `freertos-common-component/component.mk` is a more-heavily modified copy of `amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/amazon-freertos-common/component.mk`.
-  - There are some maintenance notes in our copy.
+Our project is based on the espressif demo at `amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/`, so it may occasionally be necessary to bring over changes, in particular:
+ - Our `src/main.c` is based on `amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c`.
+ - Several files in our `make/` directory come from `amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/make`. 
+
+[^1]: Our `make/Makefile` renames `amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c` to exclude it (the demo app's main) from our build, in order for us to supply our own main. Hopefully upstream [fixes this](https://github.com/aws/amazon-freertos/issues/367) someday.

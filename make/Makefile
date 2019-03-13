@@ -13,15 +13,10 @@ ifndef IDF_PATH
 export IDF_PATH := $(AMAZON_FREERTOS_PATH)/lib/third_party/mcu_vendor/espressif/esp-idf
 endif
 
+# ======== INITIAL SETUP ========
+
 QUICK_START_FROM_FREERTOS = tools/aws_config_quick_start
 QUICK_START = $(AMAZON_FREERTOS_PATH)/$(QUICK_START_FROM_FREERTOS)
-
-EXTRA_COMPONENT_DIRS := $(CURDIR)/../freertos-common-component
-EXTRA_COMPONENT_DIRS += $(CURDIR)/../freertos
-EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/ethernet
-EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/mbedtls
-EXTRA_COMPONENT_DIRS += $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code/tcpip_adapter
-EXTRA_COMPONENT_DIRS += $(CURDIR)/../src
 
 config-aws:
 	@echo "Enter your network credentials in: ../amazon-freertos/$(QUICK_START_FROM_FREERTOS)/configure.json"
@@ -60,7 +55,9 @@ CURRENT_BOARD_FILE = $(ROOMMATE_BOARDS)/current-board
 # $(CURRENT_BOARD_FILE)
 BOARD = $(shell cat $(CURRENT_BOARD_FILE))
 
+# this is exported so that it can be consumed by component makefiles:
 export TARGET_BOARD_FROM_ROOT = $(ROOMMATE_BOARDS_FROM_ROOT)/$(BOARD)
+
 TARGET_BOARD = $(ROOMMATE_BOARDS)/$(BOARD)
 
 CLIENTCRED_H_SRC = $(AMAZON_FREERTOS_PATH)/demos/common/include/aws_clientcredential.h
@@ -103,4 +100,18 @@ monitor-without-reboot:
 
 # ======== END BOARD STUFF ========
 
+# ======== PATCHING AMAZON_FREERTOS SUBMODULE ========
+
+# Remove espressif demo's main.c (in the AFR submodule) so it doesn't conflict with ours:
+NO_MAIN:=$(shell [ -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ] && mv -f ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.c ../amazon-freertos/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/main.bak )
+
+# ======== END PATCHING AMAZON_FREERTOS SUBMODULE ========
+
+
+# ======== PROJECT CONFIG ========
+
+EXTRA_COMPONENT_DIRS := $(CURDIR)/../src \
+$(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code
+
 include $(IDF_PATH)/make/project.mk
+
