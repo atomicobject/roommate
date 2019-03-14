@@ -81,3 +81,31 @@ struct led_sequence led_sequence_newtons_cradle_green(continue_sequence_func sho
         .should_continue = should_continue_func
     };
 }
+
+struct pulse_led_state {
+    struct led_state initial_state;
+    uint8_t led_index;
+} pulse_led_state;
+
+struct led_frame pulse_led(uint32_t frame_num, uint32_t elapsed_time_ms) {
+    struct led_frame frame = {
+        .new_state = pulse_led_state.initial_state,
+        .duration_ms = 50,
+        .is_last_frame = false,
+    };
+    frame.new_state.leds[pulse_led_state.led_index] = GREEN + (frame_num * 10);
+    return frame;
+}
+
+struct led_sequence led_sequence_pulse_led(struct led_state initial_state, uint8_t led_index, 
+                                           continue_sequence_func should_continue_func) {
+    
+    pulse_led_state.initial_state = initial_state;
+    pulse_led_state.led_index = led_index;
+
+    return (struct led_sequence) {
+        .executor = &pulse_led,
+        .max_frames = 200, // Higher than needed (incase we adjust the sequence)
+        .should_continue = should_continue_func
+    };
+}
