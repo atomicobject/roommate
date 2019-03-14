@@ -23,8 +23,11 @@ We're using [Amazon FreeRTOS](https://github.com/aws/amazon-freertos) as a (pris
 
 3. `make save-new-board BOARD=a-great-board-name` to save a board profile and select it as default
 
-You can repeat the above process for as many boards/environments as you choose
-Use `make use-board BOARD=a-great-board-name` to begin using a specific board profile
+You may have noticed that the setup-aws step _modifies versioned files_ in the submodule. After saving the board, you can discard changes to the submodule.
+
+You can repeat the above process for as many boards/environments as you choose, e.g. in order to have different board configurations for different wifi networks.
+
+Use `make use-board BOARD=a-great-board-name` to switch to another (already-saved) board profile.
 
 Usage information is available via `make roommate-help`.
 
