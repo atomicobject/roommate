@@ -51,7 +51,7 @@ struct led_frame newtons_cradle(uint32_t frame_num, uint32_t elapsed_time_ms, ui
     const uint8_t num_states = 14;
     uint8_t active_state = seq[frame_num % num_states];
     for (uint8_t i = 0; i < NUM_LEDS; i++) {
-        frame.new_state.leds[i] = active_state & (0x01 << i) ? BLUE : LED_OFF;
+        frame.new_state.leds[i] = active_state & (0x01 << i) ? color : LED_OFF;
     }
     frame.duration_ms = 50;
     frame.is_last_frame = frame_num >= total_passes * num_states;
