@@ -105,7 +105,7 @@ struct led_sequence led_sequence_pulse_led(struct led_state initial_state, uint8
 
     return (struct led_sequence) {
         .executor = &pulse_led,
-        .max_frames = 200, // Higher than needed (incase we adjust the sequence)
+        .max_frames = 50, // Higher than needed (incase we adjust the sequence)
         .should_continue = should_continue_func
     };
 }
