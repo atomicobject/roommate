@@ -91,7 +91,8 @@ void minute_timer_callback(TimerHandle_t timer) {
 }
 
 bool get_time_range_to_book(struct calendar_events_data * const p_events, 
-                            struct time_range * p_time_range_out) {
+                            struct time_range * p_time_range_out,
+                            uint8_t * p_led_index_for_range) {
     struct led_boundaries led_time_chunks;
     time_t current_time = time_utils_get_current_time();
     cal_util_get_led_boundaries(current_time, &led_time_chunks);
@@ -109,6 +110,7 @@ bool get_time_range_to_book(struct calendar_events_data * const p_events,
                 if (status == LED_STATUS_ROOM_AVAILABLE) {
                     // We can extend the meeting to this time window!
                     *p_time_range_out = led_time_chunks.leds[i];
+                    *p_led_index_for_range = i;
                     return true;
                 }
                 // Can't book. There's a future meeting.
@@ -119,10 +121,30 @@ bool get_time_range_to_book(struct calendar_events_data * const p_events,
     return false;
 }
 
+void begin_pending_led_animation(struct app_state * const p_app_state, struct calendar_events_data * const p_events, uint8_t led_index) {
+    struct led_boundaries led_time_chunks;
+    time_t current_time = time_utils_get_current_time();
+    cal_util_get_led_boundaries(current_time, &led_time_chunks);
+    struct led_statuses led_statuses = cal_util_get_led_statuses(&led_time_chunks, p_events);
+    struct led_control_request led_msg;
+    led_msg.type = LED_CONTROL_SEQUENCE_REQUEST;
+    struct led_state led_state;
+    for (int i = 0; i < NUM_LEDS; i++) {
+        led_state.leds[i] = cal_util_get_color_for_status(led_statuses.leds[i]);
+    }
+    led_msg.sequence_request_data = led_sequence_pulse_led(led_state, led_index, NULL);
+    QueueHandle_t led_ctrl_queue = p_app_state->led_control_queue;
+    xQueueSend(led_ctrl_queue, &led_msg, portMAX_DELAY);
+
+
+}
+
 void extend_or_reserve_room(struct app_state * const p_app_state, struct calendar_events_data * const p_events) {
     // At this point we cannot extend or reserve a room. Send the shakes head gesture.
     struct time_range range_to_book;
-    if (get_time_range_to_book(p_events, &range_to_book)) {
+    uint8_t pending_led_index = 0;
+    if (get_time_range_to_book(p_events, &range_to_book, &pending_led_index)) {
+        begin_pending_led_animation(p_app_state, p_events, pending_led_index);
         struct aws_event aws_msg = {
             .type = AWS_EVENT_REQUEST_ROOM_HOLD,
         };

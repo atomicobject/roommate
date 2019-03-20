@@ -9,6 +9,9 @@
 #include "app_state.h"
 #include "mqtt_agent_manager.h"
 #include "mqtt_event_group_flags.h"
+#include "led_control.h"
+#include "led_sequence.h"
+#include "queue.h"
 
 #define MQTT_AGENT_MANAGER_TASK_STACK_SIZE ( 2048 )
 #define MQTT_AGENT_MANAGER_TASK_PRIORITY   ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
@@ -18,6 +21,8 @@
 void maintain_mqtt_agent_connection(void * task_param);
 BaseType_t mqtt_agent_event_callback_handler( void * p_user_data, const MQTTAgentCallbackParams_t * const p_callback_params );
 BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state );
+
+void start_connecting_to_mqtt_animation(struct app_state const * const p_app_state);
 
 void mqtt_agent_manager_begin(struct app_state * p_app_state) {
     configPRINTF(("Starting MQTT Agent Manager Task...\r\n"));
@@ -39,18 +44,37 @@ void maintain_mqtt_agent_connection(void * task_param) {
             configPRINTF(("MQTT Agent Manager - No WiFi. Delaying for 5 seconds\r\n"));
             vTaskDelay(pdMS_TO_TICKS(5000));
 
-        } else if (pdPASS == createClientAndConnectToBroker(p_app_state)) {
-            xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_CONNECTED);
-            // Just hang out here forever or until the agent connection is broken.
-            configPRINTF(("MQTT Agent Manager - Waiting for agent disconnect\r\n"));
-            xEventGroupWaitBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_DISCONNECTED, pdTRUE, pdTRUE, portMAX_DELAY);
-            xEventGroupClearBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_CONNECTED);
-            configPRINTF(("MQTT Agent Manager - Detected agent disconnect\r\n"));
         } else {
-            configPRINTF(("Delaying for 1 second before attempting MQTT connect again\r\n"));
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            start_connecting_to_mqtt_animation(p_app_state);
+
+            if (pdPASS == createClientAndConnectToBroker(p_app_state)) {
+                xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_CONNECTED);
+                // Just hang out here forever or until the agent connection is broken.
+                configPRINTF(("MQTT Agent Manager - Waiting for agent disconnect\r\n"));
+                xEventGroupWaitBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_DISCONNECTED, pdTRUE, pdTRUE, portMAX_DELAY);
+                xEventGroupClearBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_CONNECTED);
+                configPRINTF(("MQTT Agent Manager - Detected agent disconnect\r\n"));
+            } else {
+                configPRINTF(("Delaying for 1 second before attempting MQTT connect again\r\n"));
+                vTaskDelay(pdMS_TO_TICKS(1000));
+            }
         }
+        
     }
+}
+
+bool should_continue_connecting_animation(struct app_state const * const p_app_state) {
+    return WIFI_IsConnected() == pdFALSE;
+    EventBits_t bits = xEventGroupGetBits(p_app_state->mqtt_agent_event_group);
+    return (bits && MQTT_EVENT_AGENT_CONNECTED);
+}
+
+void start_connecting_to_mqtt_animation(struct app_state const * const p_app_state) {
+    struct led_control_request msg = {
+        .type = LED_CONTROL_SEQUENCE_REQUEST,
+        .sequence_request_data = led_sequence_newtons_cradle_green(should_continue_connecting_animation),
+    };
+    xQueueSend(p_app_state->led_control_queue, &msg, portMAX_DELAY);
 }
 
 BaseType_t createClientAndConnectToBroker( struct app_state * p_app_state ) {
