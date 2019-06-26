@@ -28,7 +28,7 @@
 #include "task.h"
 
 /* Demo includes */
-#include "aws_demo_runner.h"
+#include "iot_demo_runner.h"
 
 /* AO Conf Proj includes */
 #include "roommate_main.h"
