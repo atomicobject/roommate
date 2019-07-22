@@ -18,8 +18,7 @@ C_COMPILER=gcc
 ifeq ($(shell uname -s), Darwin)
 C_COMPILER=clang
 endif
-
-UNITY_ROOT=${AMAZON_FREERTOS_PATH}/lib/third_party/unity
+UNITY_ROOT=${AMAZON_FREERTOS_PATH}/libraries/3rdparty/unity
 CFLAGS=-std=c99
 CFLAGS += -Wall
 CFLAGS += -Wextra
