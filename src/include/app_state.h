@@ -1,7 +1,7 @@
 #ifndef APP_STATE_H
 #define APP_STATE_H
 #include "FreeRTOS.h"
-#include "aws_mqtt_agent.h"
+#include "iot_mqtt_agent.h"
 #include "semphr.h"
 #include "event_groups.h"
 #include "FreeRTOS_IP.h"

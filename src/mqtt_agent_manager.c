@@ -1,9 +1,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "event_groups.h"
-#include "aws_mqtt_agent.h"
+#include "iot_mqtt_agent.h"
 #include "aws_clientcredential.h"
-#include "aws_wifi.h"
+#include "iot_wifi.h"
 #include <string.h>
 
 #include "app_state.h"
@@ -127,5 +127,5 @@ BaseType_t mqtt_agent_event_callback_handler( void * p_user_data, const MQTTAgen
         // Don't think this callback actually runs in an interrupt context to this next call is ok.
         xEventGroupSetBits(p_app_state->mqtt_agent_event_group, MQTT_EVENT_AGENT_DISCONNECTED);
     }
-    return pdFALSE; // This means that we are not responsible for freeing the buffer memory. See aws_mqtt_agent.h:100
+    return pdFALSE; // This means that we are not responsible for freeing the buffer memory. See iot_mqtt_agent.h:100
 }

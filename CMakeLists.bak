@@ -1,0 +1,57 @@
+cmake_minimum_required(VERSION 3.13)
+ 
+project(my_app)
+ 
+file(GLOB SOURCES "src/*.c")
+file(GLOB HEADERS "src/include/*.h")
+
+# add_executable(my_app src/main.c)
+add_executable(my_app ${SOURCES} ${HEADERS})
+
+set(IDF_PROJECT_EXECUTABLE my_app)
+
+# EXTRA_COMPONENT_DIRS := $(CURDIR)/../src \
+# $(AMAZON_FREERTOS_PATH)/demos/espressif/esp32_devkitc_esp_wrover_kit/common/application_code/espressif_code
+# get_filename_component(ROOMMATE_COMPONENT
+#     "src" ABSOLUTE
+# )
+
+# get_filename_component(ESPRESSIF_COMPONENT
+#     "amazon-freertos/vendors/espressif/boards/esp32/aws_demos/application_code/espressif_code" ABSOLUTE
+# )
+
+# set(IDF_EXTRA_COMPONENT_DIRS ${ROOMMATE_COMPONENT})
+
+# AFR_BOARD tells which board we need to target.
+set(AFR_BOARD espressif.esp32_devkitc CACHE INTERNAL "")
+
+add_subdirectory(amazon-freertos)
+ 
+# todo: add_subdirectory(src)
+include_directories(src/include)
+
+# include_directories(amazon-freertos/demos/dev_mode_key_provisioning/include)
+# include_directories(amazon-freertos/libraries/abstractions/pkcs11/include)
+# include_directories(amazon-freertos/libraries/3rdparty/pkcs11)
+
+# iot_system_init.h
+include_directories(amazon-freertos/libraries/freertos_plus/standard/utils/include)
+
+# include_directories(amazon-freertos/libraries/abstractions/wifi/include)
+# include_directories(amazon-freertos/libraries/freertos_plus/standard/freertos_plus_tcp/include)
+
+
+# iot_network_manager_private.h
+include_directories(amazon-freertos/demos/network_manager)
+
+
+
+
+# ../amazon-freertos/demos/demo_runner/aws_demo_network_addr.c:33:26: fatal error: FreeRTOS_IP.h: No such file or directory
+target_link_libraries(my_app PRIVATE AFR::freertos_plus_tcp)
+
+target_link_libraries(my_app PRIVATE AFR::mqtt)
+target_link_libraries(my_app PRIVATE AFR::dev_mode_key_provisioning)
+target_link_libraries(my_app PRIVATE AFR::secure_sockets)
+target_link_libraries(my_app PRIVATE AFR::wifi)
+target_link_libraries(my_app PRIVATE 3rdparty::jsmn)

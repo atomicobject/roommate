@@ -9,7 +9,7 @@
 #include "led_sequence.h"
 
 #include "queue.h"
-#include "aws_wifi.h"
+#include "iot_wifi.h"
 #include "esp_wifi.h" // Needed for definition of ESP_IF_WIFI_STA 
 #include "esp_interface.h" 
 
