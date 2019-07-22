@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: jrrr/esp32-ci:5bc78bd0824819a7182f545032ee2c5030221e6a
+      - image: jrrr/esp32-ci:5d6da1e2463b557e067776aaf53c8bd5c76d6b70
       # Espressif has a docker image! espressif/esp32-ci-env
       # but it's out of date:
       # WARNING: Toolchain version is not supported: 1.22.0-61-gab8375a
