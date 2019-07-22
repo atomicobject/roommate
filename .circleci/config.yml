@@ -19,7 +19,9 @@ jobs:
 
       - run:
           name: cmake
-          command: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=amazon-freertos/tools/cmake/toolchains/xtensa-esp32.cmake -G Ninja
+          command: |
+            mkdir -p build
+            cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=amazon-freertos/tools/cmake/toolchains/xtensa-esp32.cmake -G Ninja
 
       - run:
           name: ninja
