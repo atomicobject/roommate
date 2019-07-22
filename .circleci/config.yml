@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: jrrr/esp32-ci:e9f1de23adbcba0ce91ca6d670765a1447010aae
+      - image: jrrr/esp32-ci:36f58149da1f0bd0385194a461a332ebdfb43549
       # Espressif has a docker image! espressif/esp32-ci-env
       # but it's out of date:
       # WARNING: Toolchain version is not supported: 1.22.0-61-gab8375a
@@ -12,9 +12,11 @@ jobs:
       - run: git submodule sync
       - run: git submodule update --init
       - run: xtensa-esp32-elf-gcc --version
+
       # - run:
       #     name: Build
       #     command: cd make; make all
+
       - run:
           name: cmake
           command: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=amazon-freertos/tools/cmake/toolchains/xtensa-esp32.cmake -G Ninja
