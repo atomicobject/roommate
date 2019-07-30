@@ -10,7 +10,7 @@
 #include "mqtt_agent_manager.h"
 #include "mqtt_event_group_flags.h"
 
-#define MQTT_AGENT_MANAGER_TASK_STACK_SIZE ( 2048 )
+#define MQTT_AGENT_MANAGER_TASK_STACK_SIZE ( 2048 * 2 )
 #define MQTT_AGENT_MANAGER_TASK_PRIORITY   ( tskIDLE_PRIORITY + 1 ) // IDLE task is lowest priority
 #define MQTT_AGENT_MANAGER_CONNECT_FLAGS   ( mqttagentREQUIRE_TLS )
 #define MQTT_AGENT_MANAGER_TLS_NEGOTIATION_TIMEOUT   pdMS_TO_TICKS( 12000 )

@@ -42,6 +42,9 @@ static void prvWifiConnect( void );
 #include "iot_system_init.h"
 #include "iot_logging_task.h"
 
+#include "iot_wifi.h"
+#include "aws_test_utils.h"
+
 #include "nvs_flash.h"
 
 #include "FreeRTOS_Sockets.h"
@@ -107,7 +110,7 @@ int app_main( void )
 
     if( SYSTEM_Init() == pdPASS )
     {
--        roommate_app_begin(prvWifiConnect, vDevModeKeyProvisioning);
+        roommate_app_begin(prvWifiConnect, vDevModeKeyProvisioning);
 
         /* A simple example to demonstrate key and certificate provisioning in
         * microcontroller flash using PKCS#11 interface. This should be replaced
@@ -125,8 +128,10 @@ int app_main( void )
         	}
         }
 #else
-        ESP_ERROR_CHECK( esp_bt_controller_mem_release( ESP_BT_MODE_CLASSIC_BT ) );
-        ESP_ERROR_CHECK( esp_bt_controller_mem_release( ESP_BT_MODE_BLE ) );
+        // === vvv ===
+        // ESP_ERROR_CHECK( esp_bt_controller_mem_release( ESP_BT_MODE_CLASSIC_BT ) );
+        // ESP_ERROR_CHECK( esp_bt_controller_mem_release( ESP_BT_MODE_BLE ) );
+        // === ^^^ ===
 #endif
         /* Run all demos. */
         // DEMO_RUNNER_RunDemos();
@@ -307,3 +312,52 @@ void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
         esp_event_send(&evt);
     }
 }
+
+// -----
+
+void prvWifiConnect( void )
+{
+    WIFINetworkParams_t xJoinAPParams;
+    WIFIReturnCode_t eWiFiStatus;
+    uint32_t ulInitialRetryPeriodMs = 500;
+    BaseType_t xMaxRetries = 6;
+
+    eWiFiStatus = WIFI_On();
+
+    if( eWiFiStatus == eWiFiSuccess )
+    {
+        configPRINTF( ( "WiFi module initialized. Connecting to AP %s\r\n", clientcredentialWIFI_SSID ) );
+    }
+    else
+    {
+        configPRINTF( ( "WiFi module failed to initialize.\r\n" ) );
+
+        while( 1 )
+        {
+        }
+    }
+
+    /* Setup parameters. */
+    xJoinAPParams.pcSSID = clientcredentialWIFI_SSID;
+    xJoinAPParams.ucSSIDLength = sizeof( clientcredentialWIFI_SSID );
+    xJoinAPParams.pcPassword = clientcredentialWIFI_PASSWORD;
+    xJoinAPParams.ucPasswordLength = sizeof( clientcredentialWIFI_PASSWORD );
+    xJoinAPParams.xSecurity = clientcredentialWIFI_SECURITY;
+
+    RETRY_EXPONENTIAL( eWiFiStatus = WIFI_ConnectAP( &( xJoinAPParams ) ),
+                       eWiFiSuccess, ulInitialRetryPeriodMs, xMaxRetries );
+
+    if( eWiFiStatus == eWiFiSuccess )
+    {
+        configPRINTF( ( "WiFi Connected to AP. Creating tasks which use network...\r\n" ) );
+    }
+    else
+    {
+        configPRINTF( ( "WiFi failed to connect to AP %s.\r\n", clientcredentialWIFI_SSID ) );
+
+        while( 1 )
+        {
+        }
+    }
+}
+/*-----------------------------------------------------------*/
