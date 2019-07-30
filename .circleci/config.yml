@@ -14,19 +14,11 @@ jobs:
       - run: git submodule update --init
       - run: xtensa-esp32-elf-gcc --version
 
-      # - run:
-      #     name: Build
-      #     command: cd make; make all
-
       - run:
           name: cmake
           command: |
             mkdir -p build
-            cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=amazon-freertos/tools/cmake/toolchains/xtensa-esp32.cmake -G Ninja
-
-      - run:
-          name: ninja
-          command: cd build ; ninja my_app
+            ./build.sh
 
       - run:
           name: Test
