@@ -7,6 +7,8 @@ jobs:
       # but it's out of date:
       # WARNING: Toolchain version is not supported: 1.22.0-61-gab8375a
       # Expected to see version: 1.22.0-80-g6c4433a
+    environment:
+      CCACHE_DISABLE: true
     steps:
       - checkout
       - run: git submodule sync
