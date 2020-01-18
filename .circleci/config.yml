@@ -12,9 +12,9 @@ jobs:
       - run: git submodule sync
       - run: git submodule update --init
       - run: xtensa-esp32-elf-gcc --version
-      - run:
-          name: Build
-          command: cd make; make all
-      - run:
-          name: Test
-          command: cd test; make
+      # - run:
+      #     name: Build
+      #     command: cd make; make all
+      # - run:
+      #     name: Test
+      #     command: cd test; make
