@@ -1,6 +1,6 @@
 
 NINJAFILE = build/build.ninja
-OUTPUT_BINARY = build/afr_demo.bin
+OUTPUT_BINARY = build/roommate.bin
 
 all: $(OUTPUT_BINARY)
 cmake: $(NINJAFILE)
