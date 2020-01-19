@@ -19,6 +19,7 @@ list(APPEND IDF_EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS})
 # This is a temporary approach to inject an include path so that this takes precedence over the
 # config file directory inside Amazon FreeRTOS.
 include_directories(BEFORE amazon-freertos-configs)
+include_directories(BEFORE ../roommate-boards/current-board-dir)
 
 # Add amazon freertos as an subdirectory. AFR_BOARD tells which board to target.
 set(AFR_BOARD espressif.esp32_devkitc CACHE INTERNAL "")

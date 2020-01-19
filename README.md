@@ -13,6 +13,11 @@ new approach:
 Currently targeting a specific commit of AFR because https://github.com/aws/amazon-freertos/issues/1652 :
 https://github.com/aws/amazon-freertos/pull/1655/commits/681310d5e21be2db9b101961a495d3e23053a79c
 
+# Building
+
+- https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html#config-demos
+- ...
+
 # Amazon FreeRTOS Examples
 
 This repo shows how to set up a CMake project for ESP32 and use amazon freertos as an external library.
