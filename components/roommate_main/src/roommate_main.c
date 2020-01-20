@@ -19,21 +19,19 @@ void start_connecting_to_wifi_animation(struct app_state const * const p_app_sta
 struct app_state app_state;
 
 void roommate_app_begin(void_func connect_wifi) {
-    #if 0
     app_state.led_control_queue = led_control_start_controlling_leds(&app_state);
     start_connecting_to_wifi_animation(&app_state);
 
     app_state.roommate_event_queue = roommate_begin(&app_state);
-    #endif
 
     /* Connect to the wifi before running the demos */
     connect_wifi();
 
-    #if 0
     esp_wifi_get_mac(ESP_IF_WIFI_STA, app_state.mac_address.mac);
 
     button_task_begin_handling_presses(&app_state);
 
+    #if 0
     mqtt_agent_manager_begin(&app_state);
     app_state.aws_event_coordinator_queue = aws_event_coordinator_start_coordinating(&app_state);
     #endif
