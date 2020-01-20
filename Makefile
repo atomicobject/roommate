@@ -28,8 +28,10 @@ $(NINJAFILE):
 $(OUTPUT_BINARY): $(NINJAFILE)
 	cmake --build build
 
+BAUDRATE = 1843200
+
 flash: $(NINJAFILE)
-	ESPPORT=/dev/cu.SLAB_USBtoUART cmake --build build --target flash
+	ESPBAUD=$(BAUDRATE) ESPPORT=/dev/cu.SLAB_USBtoUART cmake --build build --target flash
 
 monitor:
 	ESPPORT=/dev/cu.SLAB_USBtoUART $(IDF_PATH)/tools/idf.py monitor
