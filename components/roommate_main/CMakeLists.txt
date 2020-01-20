@@ -12,3 +12,6 @@ register_component()
 # standard CMake function can be used to specify dependencies. ${COMPONENT_TARGET} is defined
 # from esp-idf when you call register_component, by default it's idf_component_<folder_name>.
 target_link_libraries(${COMPONENT_TARGET} PRIVATE AFR::mqtt)
+target_link_libraries(${COMPONENT_TARGET} PRIVATE AFR::pkcs11)
+target_link_libraries(${COMPONENT_TARGET} PRIVATE 3rdparty::jsmn)
+target_link_libraries(${COMPONENT_TARGET} PRIVATE AFR::wifi)

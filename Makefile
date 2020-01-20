@@ -2,6 +2,8 @@
 NINJAFILE = build/build.ninja
 OUTPUT_BINARY = build/roommate.bin
 
+.PHONY: $(NINJAFILE) $(OUTPUT_BINARY)
+
 all: $(OUTPUT_BINARY)
 cmake: $(NINJAFILE)
 
@@ -34,7 +36,13 @@ flash: $(NINJAFILE)
 	ESPBAUD=$(BAUDRATE) ESPPORT=/dev/cu.SLAB_USBtoUART cmake --build build --target flash
 
 monitor:
-	ESPPORT=/dev/cu.SLAB_USBtoUART $(IDF_PATH)/tools/idf.py monitor
+	ESPBAUD=$(BAUDRATE) ESPPORT=/dev/cu.SLAB_USBtoUART $(IDF_PATH)/tools/idf.py monitor
+
+erase_flash:
+	ESPBAUD=$(BAUDRATE) ESPPORT=/dev/cu.SLAB_USBtoUART $(IDF_PATH)/tools/idf.py erase_flash
+
+idfpy:
+	ESPBAUD=$(BAUDRATE) ESPPORT=/dev/cu.SLAB_USBtoUART $(IDF_PATH)/tools/idf.py
 
 # ======== INITIAL SETUP ========
 

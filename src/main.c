@@ -73,8 +73,8 @@
     #include "iot_ble_numericComparison.h"
 #endif
 
-/* Demonstrate use of component foo. */
-#include <foo.h>
+#include <roommate_main.h>
+#include "iot_wifi.h"
 
 /* Logging Task Defines. */
 #define mainLOGGING_MESSAGE_QUEUE_LENGTH    ( 32 )
@@ -103,6 +103,84 @@ static void prvMiscInitialization( void );
 
 /*-----------------------------------------------------------*/
 
+void nop(){}
+
+/****/
+
+// pasted from aws_test_utils.h:
+
+#define RETRY_EXPONENTIAL(                                               \
+        xCommand, xSuccessStatus, ulStartingPeriodMs, lRetries )         \
+    {                                                                    \
+        int32_t lRetried = 0;                                            \
+        uint32_t ulPeriodMs = ulStartingPeriodMs;                        \
+        int32_t lStatus;                                                 \
+        for( ; lRetried <= lRetries; lRetried++ ) {                      \
+            if( lRetried ) {                                             \
+                configPRINTF( ( "retrying \"%s\", %d of %d, in %d ms\n", \
+                                # xCommand, lRetried,                    \
+                                lRetries, ulPeriodMs ) );                \
+                vTaskDelay( pdMS_TO_TICKS( ulPeriodMs ) );               \
+                ulPeriodMs *= 2;                                         \
+            }                                                            \
+            lStatus = xCommand;                                          \
+            if( xSuccessStatus == lStatus ) {                            \
+                break;                                                   \
+            }                                                            \
+            configPRINTF( ( "expected %d, got %d\n",                     \
+                            xSuccessStatus, lStatus ) );                 \
+        }                                                                \
+    }
+
+void prvWifiConnect( void )
+{
+    WIFINetworkParams_t xJoinAPParams;
+    WIFIReturnCode_t eWiFiStatus;
+    uint32_t ulInitialRetryPeriodMs = 500;
+    BaseType_t xMaxRetries = 6;
+
+    eWiFiStatus = WIFI_On();
+
+    if( eWiFiStatus == eWiFiSuccess )
+    {
+        configPRINTF( ( "WiFi module initialized. Connecting to AP %s\r\n", clientcredentialWIFI_SSID ) );
+    }
+    else
+    {
+        configPRINTF( ( "WiFi module failed to initialize.\r\n" ) );
+
+        while( 1 )
+        {
+        }
+    }
+
+    /* Setup parameters. */
+    xJoinAPParams.pcSSID = clientcredentialWIFI_SSID;
+    xJoinAPParams.ucSSIDLength = sizeof( clientcredentialWIFI_SSID );
+    xJoinAPParams.pcPassword = clientcredentialWIFI_PASSWORD;
+    xJoinAPParams.ucPasswordLength = sizeof( clientcredentialWIFI_PASSWORD );
+    xJoinAPParams.xSecurity = clientcredentialWIFI_SECURITY;
+
+    RETRY_EXPONENTIAL( eWiFiStatus = WIFI_ConnectAP( &( xJoinAPParams ) ),
+                       eWiFiSuccess, ulInitialRetryPeriodMs, xMaxRetries );
+
+    if( eWiFiStatus == eWiFiSuccess )
+    {
+        configPRINTF( ( "WiFi Connected to AP. Creating tasks which use network...\r\n" ) );
+    }
+    else
+    {
+        configPRINTF( ( "WiFi failed to connect to AP %s.\r\n", clientcredentialWIFI_SSID ) );
+
+        while( 1 )
+        {
+        }
+    }
+}
+/****/
+
+
+
 /**
  * @brief Application runtime entry point.
  */
@@ -115,8 +193,6 @@ int app_main( void )
 
     if( SYSTEM_Init() == pdPASS )
     {
-        configPRINTF( ( "Calling foo: %d\n", foo() ));
-
         /* A simple example to demonstrate key and certificate provisioning in
          * microcontroller flash using PKCS#11 interface. This should be replaced
          * by production ready key provisioning mechanism. */
@@ -137,7 +213,11 @@ int app_main( void )
             ESP_ERROR_CHECK( esp_bt_controller_mem_release( ESP_BT_MODE_BLE ) );
         #endif /* if BLE_ENABLED */
         /* Run all demos. */
-        DEMO_RUNNER_RunDemos();
+        // configPRINTF( ( "Running Demos.." ));
+        // DEMO_RUNNER_RunDemos();
+
+        roommate_app_begin( prvWifiConnect);
+
     }
 
     /* Start the scheduler.  Initialization that requires the OS to be running,

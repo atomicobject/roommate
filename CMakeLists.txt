@@ -21,6 +21,9 @@ list(APPEND IDF_EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS})
 include_directories(BEFORE amazon-freertos-configs)
 include_directories(BEFORE ../roommate-boards/current-board-dir)
 
+# https://github.com/aws/amazon-freertos/issues/832#issuecomment-514677910
+set(IDF_SDKCONFIG_DEFAULTS "${CMAKE_CURRENT_LIST_DIR}/sdkconfig.defaults")
+
 # Add amazon freertos as an subdirectory. AFR_BOARD tells which board to target.
 set(AFR_BOARD espressif.esp32_devkitc CACHE INTERNAL "")
 add_subdirectory(amazon-freertos)
